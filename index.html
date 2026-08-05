@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>タイピングヒーロー (Typing Hero JP) - 日本語ローマ字タイピング練習</title>
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=M+PLUS+Rounded+1c:wght@400;700;900&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- 1920x1080 Auto-Scaling Container -->
+  <div id="app-viewport">
+    
+    <!-- Top Header Bar -->
+    <header class="app-header">
+      <div class="logo-area">
+        <span class="logo-icon">⌨️</span>
+        <h1 class="logo-title">タイピングヒーロー <small>JP</small></h1>
+      </div>
+
+      <!-- 6 Practice Mode Navigation Tabs -->
+      <nav class="nav-tabs">
+        <button class="nav-item active" data-tab="position">1. 各ポジション</button>
+        <button class="nav-item" data-tab="word1">2. 単語1 (あいうえお)</button>
+        <button class="nav-item" data-tab="word2">3. 単語2</button>
+        <button class="nav-item" data-tab="bunsetsu">4. 文節</button>
+        <button class="nav-item" data-tab="short">5. 短文</button>
+        <button class="nav-item" data-tab="long">6. 長文</button>
+        <button class="nav-item nav-game" data-tab="game">🎮 酸性雨ゲーム</button>
+      </nav>
+
+      <!-- Right Header Actions -->
+      <div class="header-actions">
+        <div class="user-badge" id="btn-login" title="クリックして生徒切替">
+          <span class="user-icon">👤</span>
+          <span id="user-display-name">ゲスト生徒</span>
+        </div>
+        <button class="btn btn-header" id="btn-report">📊 レポート</button>
+        <button class="btn btn-header" id="btn-sound-toggle">🔊 サウンドON</button>
+        <button class="btn btn-header" id="btn-theme-toggle">🌙 ダーク</button>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="app-body">
+      
+      <!-- View 1: Typing Practice Mode View -->
+      <section id="practice-view" class="view-panel">
+        
+        <!-- Top Stats HUD -->
+        <div class="hud-bar">
+          <div class="hud-card">
+            <span class="hud-label">打字速度 (KPM)</span>
+            <span class="hud-value" id="stat-kpm">0</span>
+          </div>
+          <div class="hud-card">
+            <span class="hud-label">正確率</span>
+            <span class="hud-value" id="stat-acc">100%</span>
+          </div>
+          <div class="hud-card">
+            <span class="hud-label">経過時間</span>
+            <span class="hud-value" id="stat-time">0s</span>
+          </div>
+          <div class="hud-title-card">
+            <span class="hud-label">練習項目</span>
+            <span class="hud-title-text" id="typing-title">ホームポジション (fj)</span>
+          </div>
+        </div>
+
+        <!-- Center Text Display Card -->
+        <div class="display-card">
+          <div id="typing-display" class="japanese-text-container">
+            <!-- Dynamic Japanese Primary Display -->
+          </div>
+          <div id="romaji-guide" class="romaji-guide-container">
+            <!-- Dynamic Romaji Character Tokens -->
+          </div>
+        </div>
+
+        <!-- Bottom Virtual Keyboard Guide -->
+        <div id="virtual-keyboard" class="keyboard-container">
+          <!-- Rendered via keyboard.js -->
+        </div>
+
+      </section>
+
+      <!-- View 2: Falling Words Acid Rain Game View -->
+      <section id="game-view" class="view-panel" style="display: none;">
+        <div class="game-hud">
+          <div class="game-hud-item">スコア: <span id="game-score">0</span></div>
+          <div class="game-hud-item">コンボ: <span id="game-combo">0</span></div>
+          <div class="game-hud-item">残機: <span id="game-lives">❤️❤️❤️❤️❤️</span></div>
+          <div class="game-input-box">入力: <span id="game-input-text"></span></div>
+        </div>
+        <canvas id="game-canvas" width="1400" height="600"></canvas>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Modal 1: Report & Leaderboard Modal -->
+  <div id="report-modal" class="modal-backdrop">
+    <div class="modal-card">
+      <button class="modal-close" id="close-report-modal">&times;</button>
+      <div id="report-content" class="modal-body">
+        <!-- Rendered via report.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Student Login / Profile Switch Modal -->
+  <div id="login-modal" class="modal-backdrop">
+    <div class="modal-card modal-small">
+      <button class="modal-close" id="close-login-modal">&times;</button>
+      <h2>👤 生徒ログイン / 新規登録</h2>
+      <p class="modal-subtext">お名前とPINコードを入力してログインしてください。</p>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="input-student-name">生徒のお名前</label>
+          <input type="text" id="input-student-name" placeholder="例: 山田 太郎" required />
+        </div>
+        <div class="form-group">
+          <label for="input-student-pin">PINコード (4桁数字)</label>
+          <input type="password" id="input-student-pin" placeholder="0000" maxlength="4" />
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">ログイン / 登録</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="./src/js/app.js"></script>
+</body>
+</html>
