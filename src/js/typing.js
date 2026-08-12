@@ -1,6 +1,6 @@
 /**
  * Core Typing Engine for the Japanese Practice Modes
- * Includes 3-Second Countdown & Playgram-style sub-lessons.
+ * Includes Space Key Ready State, 3-Second Countdown & Playgram-style sub-lessons.
  */
 
 import { PRACTICE_DATA } from './data_jp.js';
@@ -12,7 +12,7 @@ import { auth } from './auth.js';
 export class TypingEngine {
   constructor(keyboardInstance) {
     this.keyboard = keyboardInstance;
-    this.currentMode = 'position'; // 'position', 'word1', 'word2', 'bunsetsu', 'short', 'long'
+    this.currentMode = 'position';
     this.selectedSubCategoryId = 'home';
     this.itemIndex = 0;
     this.passageIndex = 0;
@@ -27,6 +27,7 @@ export class TypingEngine {
     this.errorCount = 0;
     this.timerInterval = null;
 
+    this.isWaitingForSpaceToStart = true;
     this.isCountingDown = false;
     this.countdownTimer = null;
 
@@ -43,26 +44,49 @@ export class TypingEngine {
     this.itemIndex = 0;
     this.passageIndex = 0;
     this.resetSession();
-    this.startCountdown(() => this.loadCurrentItem());
+    this.showReadyPrompt();
   }
 
   setSubCategory(subCategoryId) {
     this.selectedSubCategoryId = subCategoryId;
     this.itemIndex = 0;
     this.resetSession();
-    this.startCountdown(() => this.loadCurrentItem());
+    this.showReadyPrompt();
+  }
+
+  showReadyPrompt() {
+    this.isWaitingForSpaceToStart = true;
+    this.isCountingDown = false;
+    clearInterval(this.countdownTimer);
+
+    this.loadCurrentItem(false); // load text display without activating input
+
+    const overlay = document.getElementById('countdown-overlay');
+    const textEl = document.getElementById('countdown-text');
+    const labelEl = document.getElementById('countdown-label');
+
+    if (overlay && textEl && labelEl) {
+      overlay.style.display = 'flex';
+      textEl.textContent = '⏸️';
+      textEl.style.fontSize = '100px';
+      labelEl.textContent = 'スペースキーを押して練習を始めます';
+    }
   }
 
   startCountdown(callback) {
+    this.isWaitingForSpaceToStart = false;
     this.isCountingDown = true;
     let count = 3;
 
     const overlay = document.getElementById('countdown-overlay');
     const textEl = document.getElementById('countdown-text');
+    const labelEl = document.getElementById('countdown-label');
 
-    if (overlay && textEl) {
+    if (overlay && textEl && labelEl) {
       overlay.style.display = 'flex';
+      textEl.style.fontSize = '160px';
       textEl.textContent = count;
+      labelEl.textContent = '準備してください！ (Ready...)';
       sound.playKeySound();
 
       clearInterval(this.countdownTimer);
@@ -98,7 +122,7 @@ export class TypingEngine {
     this.updateStatsUI();
   }
 
-  loadCurrentItem() {
+  loadCurrentItem(activateKeyboard = true) {
     let item = null;
 
     if (this.currentMode === 'position') {
@@ -129,7 +153,12 @@ export class TypingEngine {
     this.typedRomajiInToken = '';
 
     this.renderTextDisplay(displayText, titleText);
-    this.highlightKeyboardNextKey();
+    
+    if (activateKeyboard) {
+      this.highlightKeyboardNextKey();
+    } else if (this.keyboard) {
+      this.keyboard.setNextTargetKey(null);
+    }
   }
 
   renderTextDisplay(displayText, titleText = '') {
@@ -186,8 +215,20 @@ export class TypingEngine {
   }
 
   handleKeyDown(e) {
-    if (this.isCountingDown) return;
     if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+    // Handle Space Key to start countdown when waiting
+    if (this.isWaitingForSpaceToStart) {
+      if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        this.startCountdown(() => {
+          this.highlightKeyboardNextKey();
+        });
+      }
+      return;
+    }
+
+    if (this.isCountingDown) return;
     if (e.key.length !== 1 || !/[a-zA-Z\-\s,.]/i.test(e.key)) return;
 
     if (!this.startTime) {
@@ -277,7 +318,7 @@ export class TypingEngine {
       }
 
       this.resetSession();
-      this.loadCurrentItem();
+      this.showReadyPrompt();
     }, 400);
   }
 

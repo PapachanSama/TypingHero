@@ -1,5 +1,5 @@
 /**
- * Interactive On-Screen Keyboard Component & Semi-Transparent Hands Visualizer
+ * Interactive On-Screen Keyboard Component & Playgram-Style Line-Art Hands Visualizer
  */
 
 const KEYBOARD_LAYOUT = [
@@ -40,7 +40,7 @@ const KEYBOARD_LAYOUT = [
     { key: '.', label: '.', finger: 'right-ring' }
   ],
   [
-    { key: ' ', label: 'スペース (Space)', finger: 'thumb', wide: true }
+    { key: ' ', label: 'SPACE', finger: 'thumb', wide: true }
   ]
 ];
 
@@ -48,7 +48,6 @@ export class VirtualKeyboard {
   constructor(containerId) {
     this.container = document.getElementById(containerId);
     this.activeTargetKey = null;
-    this.activeFinger = null;
     this.init();
   }
 
@@ -79,45 +78,63 @@ export class VirtualKeyboard {
       kbGrid.appendChild(rowDiv);
     });
 
-    // 2. Semi-Transparent Hands SVG Visualizer
-    const handsContainer = document.createElement('div');
-    handsContainer.className = 'hands-visualizer-container';
-    handsContainer.innerHTML = this.renderHandsSVG();
+    // 2. Playgram-style SVG Hands Overlay
+    const handsSvgOverlay = document.createElement('div');
+    handsSvgOverlay.className = 'playgram-hands-overlay';
+    handsSvgOverlay.innerHTML = this.renderPlaygramHandsSVG();
 
     wrapper.appendChild(kbGrid);
-    wrapper.appendChild(handsContainer);
+    wrapper.appendChild(handsSvgOverlay);
     this.container.appendChild(wrapper);
 
     this.bindEvents();
   }
 
-  renderHandsSVG() {
+  renderPlaygramHandsSVG() {
     return `
-      <div class="hands-wrapper">
-        <!-- Left Hand -->
-        <div class="hand-box hand-left">
-          <span class="hand-label">左手 (Left)</span>
-          <div class="fingers-group">
-            <div class="finger-node finger-left-pinky" data-finger="left-pinky">小指</div>
-            <div class="finger-node finger-left-ring" data-finger="left-ring">薬指</div>
-            <div class="finger-node finger-left-middle" data-finger="left-middle">中指</div>
-            <div class="finger-node finger-left-index" data-finger="left-index">人差</div>
-            <div class="finger-node finger-left-thumb" data-finger="thumb">親指</div>
-          </div>
-        </div>
+      <svg class="hands-svg" viewBox="0 0 1000 450" preserveAspectRatio="xMidYMid meet">
+        <!-- Left Hand Outline -->
+        <g class="hand-group hand-left-group">
+          <!-- Left Pinky -->
+          <path class="finger-path finger-left-pinky" data-finger="left-pinky"
+            d="M 220 380 Q 230 200 280 130 Q 300 130 300 160 Q 270 230 250 380 Z" />
+          <!-- Left Ring -->
+          <path class="finger-path finger-left-ring" data-finger="left-ring"
+            d="M 270 380 Q 310 160 340 100 Q 365 100 365 130 Q 330 200 305 380 Z" />
+          <!-- Left Middle -->
+          <path class="finger-path finger-left-middle" data-finger="left-middle"
+            d="M 320 380 Q 380 140 405 80 Q 430 80 430 110 Q 400 190 355 380 Z" />
+          <!-- Left Index -->
+          <path class="finger-path finger-left-index" data-finger="left-index"
+            d="M 370 380 Q 440 160 470 100 Q 495 100 495 130 Q 450 200 405 380 Z" />
+          <!-- Left Thumb -->
+          <path class="finger-path finger-left-thumb" data-finger="thumb"
+            d="M 410 380 Q 470 280 520 250 Q 535 260 520 280 Q 470 320 440 380 Z" />
+          <!-- Left Palm Outline -->
+          <path class="palm-outline" d="M 200 450 Q 220 350 250 320 Q 380 340 440 450 Z" />
+        </g>
 
-        <!-- Right Hand -->
-        <div class="hand-box hand-right">
-          <span class="hand-label">右手 (Right)</span>
-          <div class="fingers-group">
-            <div class="finger-node finger-right-thumb" data-finger="thumb">親指</div>
-            <div class="finger-node finger-right-index" data-finger="right-index">人差</div>
-            <div class="finger-node finger-right-middle" data-finger="right-middle">中指</div>
-            <div class="finger-node finger-right-ring" data-finger="right-ring">薬指</div>
-            <div class="finger-node finger-right-pinky" data-finger="right-pinky">小指</div>
-          </div>
-        </div>
-      </div>
+        <!-- Right Hand Outline -->
+        <g class="hand-group hand-right-group">
+          <!-- Right Thumb -->
+          <path class="finger-path finger-right-thumb" data-finger="thumb"
+            d="M 590 380 Q 530 280 480 250 Q 465 260 480 280 Q 530 320 560 380 Z" />
+          <!-- Right Index -->
+          <path class="finger-path finger-right-index" data-finger="right-index"
+            d="M 630 380 Q 560 160 530 100 Q 505 100 505 130 Q 550 200 595 380 Z" />
+          <!-- Right Middle -->
+          <path class="finger-path finger-right-middle" data-finger="right-middle"
+            d="M 680 380 Q 620 140 595 80 Q 570 80 570 110 Q 600 190 645 380 Z" />
+          <!-- Right Ring -->
+          <path class="finger-path finger-right-ring" data-finger="right-ring"
+            d="M 730 380 Q 690 160 660 100 Q 635 100 635 130 Q 670 200 695 380 Z" />
+          <!-- Right Pinky -->
+          <path class="finger-path finger-right-pinky" data-finger="right-pinky"
+            d="M 780 380 Q 770 200 720 130 Q 700 130 700 160 Q 730 230 750 380 Z" />
+          <!-- Right Palm Outline -->
+          <path class="palm-outline" d="M 800 450 Q 780 350 750 320 Q 620 340 560 450 Z" />
+        </g>
+      </svg>
     `;
   }
 
@@ -145,9 +162,9 @@ export class VirtualKeyboard {
       if (prevEl) prevEl.classList.remove('key-target');
     }
 
-    // Reset active finger node highlight
-    this.container.querySelectorAll('.finger-node').forEach(node => {
-      node.classList.remove('finger-active');
+    // Reset active finger path highlight
+    this.container.querySelectorAll('.finger-path').forEach(path => {
+      path.classList.remove('finger-active');
     });
 
     if (!char) return;
@@ -158,13 +175,13 @@ export class VirtualKeyboard {
     if (targetEl) {
       targetEl.classList.add('key-target');
       const fingerName = targetEl.dataset.finger;
-      this.highlightFingerNode(fingerName);
+      this.highlightFingerPath(fingerName);
     }
   }
 
-  highlightFingerNode(fingerName) {
+  highlightFingerPath(fingerName) {
     if (!fingerName) return;
-    const fingerNodes = this.container.querySelectorAll(`.finger-node[data-finger="${fingerName}"]`);
-    fingerNodes.forEach(node => node.classList.add('finger-active'));
+    const paths = this.container.querySelectorAll(`.finger-path[data-finger="${fingerName}"]`);
+    paths.forEach(p => p.classList.add('finger-active'));
   }
 }
