@@ -1,5 +1,6 @@
 /**
- * Main Application Orchestrator
+ * Main Application Orchestrator - Handles 3 Scenes:
+ * Scene 1: Start Prompt → Scene 2: Countdown → Scene 3: Main App
  */
 
 import { initScaler } from './scale.js';
@@ -11,6 +12,16 @@ import { ReportView } from './report.js';
 import { sound } from './sound.js';
 import { PRACTICE_DATA } from './data_jp.js';
 
+const MODE_NAMES = {
+  position: '各ポジション練習',
+  word1: '単語練習1 (あいうえお順)',
+  word2: '単語練習2',
+  bunsetsu: '文節練習',
+  short: '短文練習',
+  long: '長文練習',
+  game: '酸性雨ゲーム'
+};
+
 class App {
   constructor() {
     this.keyboard = null;
@@ -18,12 +29,63 @@ class App {
     this.gameEngine = null;
     this.reportView = null;
     this.currentTab = 'position';
+    this.currentSubCat = 'home';
+    this.sceneState = 'start'; // 'start' | 'countdown' | 'app'
   }
 
   async init() {
-    initScaler();
     await auth.init();
     this.updateUserUI();
+
+    // Scene 1 space key listener
+    this.bindStartScene();
+  }
+
+  bindStartScene() {
+    const sceneStart = document.getElementById('scene-start');
+    const modeLabel = document.getElementById('scene-mode-label');
+    if (modeLabel) modeLabel.textContent = MODE_NAMES[this.currentTab] || '1. 各ポジション練習';
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        if (this.sceneState === 'start') {
+          this.startCountdown();
+        }
+      }
+    });
+  }
+
+  startCountdown() {
+    this.sceneState = 'countdown';
+    this.showScene('scene-countdown');
+    sound.playKeySound();
+
+    let count = 3;
+    const numEl = document.getElementById('countdown-number');
+    if (numEl) numEl.textContent = count;
+
+    const timer = setInterval(() => {
+      count--;
+      if (count > 0) {
+        if (numEl) numEl.textContent = count;
+        sound.playKeySound();
+      } else if (count === 0) {
+        if (numEl) numEl.textContent = 'スタート！';
+        sound.playSuccessSound();
+      } else {
+        clearInterval(timer);
+        this.launchApp();
+      }
+    }, 800);
+  }
+
+  launchApp() {
+    this.sceneState = 'app';
+    this.showScene('app-viewport');
+
+    // Initialize scaler only after app is visible
+    initScaler();
 
     this.keyboard = new VirtualKeyboard('virtual-keyboard');
     this.typingEngine = new TypingEngine(this.keyboard);
@@ -31,43 +93,45 @@ class App {
     this.gameEngine = new TypingGame('game-canvas');
 
     this.bindNavigation();
-    this.bindSubCategoryNavigation();
     this.bindModals();
     this.bindThemeAndSound();
 
     this.renderSubCategories('home');
     this.typingEngine.setMode('position', 'home');
+    this.updateUserUI();
+  }
+
+  showScene(activeId) {
+    ['scene-start', 'scene-countdown', 'app-viewport'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.remove('scene-active');
+        el.style.display = 'none';
+      }
+    });
+    const target = document.getElementById(activeId);
+    if (target) {
+      target.style.display = activeId === 'app-viewport' ? 'flex' : 'flex';
+      target.classList.add('scene-active');
+    }
   }
 
   updateUserUI() {
     const user = auth.getCurrentUser();
-    const userLabel = document.getElementById('user-display-name');
-    if (userLabel) {
-      userLabel.textContent = user.name + (user.role === 'admin' ? ' (先生/管理者)' : '');
-    }
+    const el = document.getElementById('user-display-name');
+    if (el) el.textContent = user.name + (user.role === 'admin' ? ' (管理者)' : '');
   }
 
-  bindNavigation() {
-    const navItems = document.querySelectorAll('.nav-item[data-tab]');
-    navItems.forEach(item => {
-      item.addEventListener('click', () => {
-        const tab = item.dataset.tab;
-        this.switchTab(tab);
-      });
-    });
-  }
-
-  renderSubCategories(activeId = 'home') {
-    const container = document.getElementById('sub-category-bar');
-    if (!container) return;
+  renderSubCategories(activeId) {
+    const bar = document.getElementById('sub-category-bar');
+    if (!bar) return;
 
     if (this.currentTab !== 'position') {
-      container.style.display = 'none';
+      bar.style.display = 'none';
       return;
     }
-
-    container.style.display = 'flex';
-    container.innerHTML = '';
+    bar.style.display = 'flex';
+    bar.innerHTML = '';
 
     PRACTICE_DATA.positionCategories.forEach(cat => {
       const btn = document.createElement('button');
@@ -75,21 +139,23 @@ class App {
       btn.dataset.cat = cat.id;
       btn.textContent = cat.name;
       btn.addEventListener('click', () => {
-        container.querySelectorAll('.btn-sub-cat').forEach(b => b.classList.remove('active'));
+        bar.querySelectorAll('.btn-sub-cat').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        this.currentSubCat = cat.id;
         this.typingEngine.setSubCategory(cat.id);
       });
-      container.appendChild(btn);
+      bar.appendChild(btn);
     });
   }
 
-  bindSubCategoryNavigation() {
-    // Handled in renderSubCategories
+  bindNavigation() {
+    document.querySelectorAll('.nav-item[data-tab]').forEach(item => {
+      item.addEventListener('click', () => this.switchTab(item.dataset.tab));
+    });
   }
 
   switchTab(tab) {
     this.currentTab = tab;
-    
     document.querySelectorAll('.nav-item[data-tab]').forEach(el => {
       el.classList.toggle('active', el.dataset.tab === tab);
     });
@@ -100,99 +166,72 @@ class App {
     this.renderSubCategories('home');
 
     if (tab === 'game') {
-      if (practiceView) practiceView.style.display = 'none';
-      if (gameView) gameView.style.display = 'flex';
+      practiceView.style.display = 'none';
+      gameView.style.display = 'flex';
       this.gameEngine.start();
     } else {
-      if (gameView) gameView.style.display = 'none';
-      if (practiceView) practiceView.style.display = 'flex';
+      gameView.style.display = 'none';
+      practiceView.style.display = 'flex';
       this.gameEngine.stop();
       this.typingEngine.setMode(tab, 'home');
     }
   }
 
   bindModals() {
-    const reportBtn = document.getElementById('btn-report');
-    const reportModal = document.getElementById('report-modal');
-    const closeReportBtn = document.getElementById('close-report-modal');
+    // Report
+    document.getElementById('btn-report')?.addEventListener('click', async () => {
+      const user = auth.getCurrentUser();
+      if (user.role === 'admin') await this.reportView.renderAdminDashboard();
+      else await this.reportView.renderStudentReport();
+      document.getElementById('report-modal')?.classList.add('show');
+    });
+    document.getElementById('close-report-modal')?.addEventListener('click', () => {
+      document.getElementById('report-modal')?.classList.remove('show');
+    });
 
-    if (reportBtn && reportModal) {
-      reportBtn.addEventListener('click', async () => {
-        const user = auth.getCurrentUser();
-        if (user.role === 'admin') {
-          await this.reportView.renderAdminDashboard();
-        } else {
-          await this.reportView.renderStudentReport();
-        }
-        reportModal.classList.add('show');
-      });
-    }
-
-    if (closeReportBtn && reportModal) {
-      closeReportBtn.addEventListener('click', () => {
-        reportModal.classList.remove('show');
-      });
-    }
-
-    const loginBtn = document.getElementById('btn-login');
-    const loginModal = document.getElementById('login-modal');
-    const closeLoginBtn = document.getElementById('close-login-modal');
-    const loginForm = document.getElementById('login-form');
-
-    if (loginBtn && loginModal) {
-      loginBtn.addEventListener('click', () => {
-        loginModal.classList.add('show');
-      });
-    }
-
-    if (closeLoginBtn && loginModal) {
-      closeLoginBtn.addEventListener('click', () => {
-        loginModal.classList.remove('show');
-      });
-    }
-
-    if (loginForm) {
-      loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const nameInput = document.getElementById('input-student-name');
-        const pinInput = document.getElementById('input-student-pin');
-
-        if (!nameInput || !nameInput.value.trim()) return;
-
-        const res = await auth.login(nameInput.value, pinInput ? pinInput.value : '0000');
-        if (res.success) {
-          this.updateUserUI();
-          loginModal.classList.remove('show');
-          alert(`ようこそ、${res.user.name} さん！`);
-        } else {
-          alert(res.message || 'ログインに失敗しました。');
-        }
-      });
-    }
+    // Login
+    document.getElementById('btn-login')?.addEventListener('click', () => {
+      document.getElementById('login-modal')?.classList.add('show');
+    });
+    document.getElementById('close-login-modal')?.addEventListener('click', () => {
+      document.getElementById('login-modal')?.classList.remove('show');
+    });
+    document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('input-student-name')?.value;
+      const pin = document.getElementById('input-student-pin')?.value || '0000';
+      if (!name?.trim()) return;
+      const res = await auth.login(name, pin);
+      if (res.success) {
+        this.updateUserUI();
+        document.getElementById('login-modal')?.classList.remove('show');
+        alert(`ようこそ、${res.user.name} さん！`);
+      } else {
+        alert(res.message || 'ログインに失敗しました。');
+      }
+    });
   }
 
   bindThemeAndSound() {
-    const themeBtn = document.getElementById('btn-theme-toggle');
-    if (themeBtn) {
-      themeBtn.addEventListener('click', () => {
-        document.body.classList.toggle('theme-pastel');
-        const isPastel = document.body.classList.contains('theme-pastel');
-        themeBtn.textContent = isPastel ? '🌸 パステル' : '🌙 ダーク';
-      });
-    }
-
-    const soundBtn = document.getElementById('btn-sound-toggle');
-    if (soundBtn) {
-      soundBtn.addEventListener('click', () => {
-        const enabled = !sound.enabled;
-        sound.toggleSound(enabled);
-        soundBtn.textContent = enabled ? '🔊 サウンドON' : '🔇 サウンドOFF';
-      });
-    }
+    document.getElementById('btn-theme-toggle')?.addEventListener('click', () => {
+      document.body.classList.toggle('theme-pastel');
+      const isPastel = document.body.classList.contains('theme-pastel');
+      document.getElementById('btn-theme-toggle').textContent = isPastel ? '🌸 パステル' : '🌙 ダーク';
+    });
+    document.getElementById('btn-sound-toggle')?.addEventListener('click', () => {
+      const en = !sound.enabled;
+      sound.toggleSound(en);
+      document.getElementById('btn-sound-toggle').textContent = en ? '🔊 ON' : '🔇 OFF';
+    });
   }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  // Show scene 1 only
+  ['scene-countdown', 'app-viewport'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
   const app = new App();
   app.init();
 });

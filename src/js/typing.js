@@ -1,6 +1,5 @@
 /**
- * Core Typing Engine for the Japanese Practice Modes
- * Includes Space Key Ready State, 3-Second Countdown & Playgram-style sub-lessons.
+ * Core Typing Engine - setMode only loads text; Space key no longer handled here.
  */
 
 import { PRACTICE_DATA } from './data_jp.js';
@@ -27,10 +26,6 @@ export class TypingEngine {
     this.errorCount = 0;
     this.timerInterval = null;
 
-    this.isWaitingForSpaceToStart = true;
-    this.isCountingDown = false;
-    this.countdownTimer = null;
-
     this.bindEvents();
   }
 
@@ -44,71 +39,14 @@ export class TypingEngine {
     this.itemIndex = 0;
     this.passageIndex = 0;
     this.resetSession();
-    this.showReadyPrompt();
+    this.loadCurrentItem();
   }
 
   setSubCategory(subCategoryId) {
     this.selectedSubCategoryId = subCategoryId;
     this.itemIndex = 0;
     this.resetSession();
-    this.showReadyPrompt();
-  }
-
-  showReadyPrompt() {
-    this.isWaitingForSpaceToStart = true;
-    this.isCountingDown = false;
-    clearInterval(this.countdownTimer);
-
-    this.loadCurrentItem(false); // load text display without activating input
-
-    const overlay = document.getElementById('countdown-overlay');
-    const textEl = document.getElementById('countdown-text');
-    const labelEl = document.getElementById('countdown-label');
-
-    if (overlay && textEl && labelEl) {
-      overlay.style.display = 'flex';
-      textEl.textContent = '⏸️';
-      textEl.style.fontSize = '100px';
-      labelEl.textContent = 'スペースキーを押して練習を始めます';
-    }
-  }
-
-  startCountdown(callback) {
-    this.isWaitingForSpaceToStart = false;
-    this.isCountingDown = true;
-    let count = 3;
-
-    const overlay = document.getElementById('countdown-overlay');
-    const textEl = document.getElementById('countdown-text');
-    const labelEl = document.getElementById('countdown-label');
-
-    if (overlay && textEl && labelEl) {
-      overlay.style.display = 'flex';
-      textEl.style.fontSize = '160px';
-      textEl.textContent = count;
-      labelEl.textContent = '準備してください！ (Ready...)';
-      sound.playKeySound();
-
-      clearInterval(this.countdownTimer);
-      this.countdownTimer = setInterval(() => {
-        count--;
-        if (count > 0) {
-          textEl.textContent = count;
-          sound.playKeySound();
-        } else if (count === 0) {
-          textEl.textContent = 'スタート!';
-          sound.playSuccessSound();
-        } else {
-          clearInterval(this.countdownTimer);
-          overlay.style.display = 'none';
-          this.isCountingDown = false;
-          if (callback) callback();
-        }
-      }, 750);
-    } else {
-      this.isCountingDown = false;
-      if (callback) callback();
-    }
+    this.loadCurrentItem();
   }
 
   resetSession() {
@@ -122,82 +60,63 @@ export class TypingEngine {
     this.updateStatsUI();
   }
 
-  loadCurrentItem(activateKeyboard = true) {
+  loadCurrentItem() {
     let item = null;
 
     if (this.currentMode === 'position') {
       const catObj = PRACTICE_DATA.positionCategories.find(c => c.id === this.selectedSubCategoryId) || PRACTICE_DATA.positionCategories[0];
-      const lessons = catObj.lessons;
-      item = lessons[this.itemIndex % lessons.length];
+      item = catObj.lessons[this.itemIndex % catObj.lessons.length];
+    } else if (this.currentMode === 'long') {
+      const longItem = PRACTICE_DATA.long[this.itemIndex % PRACTICE_DATA.long.length];
+      const passage = longItem.passages[this.passageIndex % longItem.passages.length];
+      this.tokens = parseKanaToRomajiTokens(passage.kana);
+      this.tokenIndex = 0;
+      this.typedRomajiInToken = '';
+      this.renderTextDisplay(passage.kanji, `${longItem.title} (${this.passageIndex + 1}/${longItem.passages.length})`);
+      this.highlightKeyboardNextKey();
+      return;
     } else {
-      const list = PRACTICE_DATA[this.currentMode];
-      if (!list || list.length === 0) return;
-      item = list[this.itemIndex % list.length];
+      const list = PRACTICE_DATA[this.currentMode] || [];
+      item = list[this.itemIndex % (list.length || 1)];
     }
 
     if (!item) return;
-
-    let kanaText = item.kana;
-    let displayText = item.display || item.kanji;
-    let titleText = item.title || '';
-
-    if (this.currentMode === 'long') {
-      const passageObj = item.passages[this.passageIndex % item.passages.length];
-      kanaText = passageObj.kana;
-      displayText = passageObj.kanji;
-      titleText = `${item.title} (${this.passageIndex + 1}/${item.passages.length})`;
-    }
-
-    this.tokens = parseKanaToRomajiTokens(kanaText);
+    this.tokens = parseKanaToRomajiTokens(item.kana);
     this.tokenIndex = 0;
     this.typedRomajiInToken = '';
-
-    this.renderTextDisplay(displayText, titleText);
-    
-    if (activateKeyboard) {
-      this.highlightKeyboardNextKey();
-    } else if (this.keyboard) {
-      this.keyboard.setNextTargetKey(null);
-    }
+    this.renderTextDisplay(item.display || item.kanji, item.title || '');
+    this.highlightKeyboardNextKey();
   }
 
   renderTextDisplay(displayText, titleText = '') {
-    const displayContainer = document.getElementById('typing-display');
     const titleEl = document.getElementById('typing-title');
-
     if (titleEl) titleEl.textContent = titleText;
 
-    if (displayContainer) {
-      displayContainer.innerHTML = '';
-      const mainTextDiv = document.createElement('div');
-      mainTextDiv.className = 'primary-text';
-      mainTextDiv.textContent = displayText;
-      displayContainer.appendChild(mainTextDiv);
+    const container = document.getElementById('typing-display');
+    if (container) {
+      container.innerHTML = '';
+      const div = document.createElement('div');
+      div.className = 'primary-text';
+      div.textContent = displayText;
+      container.appendChild(div);
     }
-
     this.updateRomajiGuideDisplay();
   }
 
   updateRomajiGuideDisplay() {
-    const romajiGuideEl = document.getElementById('romaji-guide');
-    if (!romajiGuideEl) return;
-
+    const el = document.getElementById('romaji-guide');
+    if (!el) return;
     let html = '';
     this.tokens.forEach((t, idx) => {
-      const isCurrent = idx === this.tokenIndex;
-      const isTyped = idx < this.tokenIndex;
-      let tokenRomaji = t.defaultRomaji;
-
-      if (isCurrent) {
-        html += `<span class="token token-active"><u class="typed">${this.typedRomajiInToken}</u>${tokenRomaji.slice(this.typedRomajiInToken.length)}</span>`;
-      } else if (isTyped) {
-        html += `<span class="token token-done">${tokenRomaji}</span>`;
+      if (idx < this.tokenIndex) {
+        html += `<span class="token token-done">${t.defaultRomaji}</span>`;
+      } else if (idx === this.tokenIndex) {
+        html += `<span class="token token-active"><span class="typed">${this.typedRomajiInToken}</span>${t.defaultRomaji.slice(this.typedRomajiInToken.length)}</span>`;
       } else {
-        html += `<span class="token">${tokenRomaji}</span>`;
+        html += `<span class="token">${t.defaultRomaji}</span>`;
       }
     });
-
-    romajiGuideEl.innerHTML = html;
+    el.innerHTML = html;
   }
 
   highlightKeyboardNextKey() {
@@ -206,29 +125,13 @@ export class TypingEngine {
       this.keyboard.setNextTargetKey(null);
       return;
     }
-
-    const currentToken = this.tokens[this.tokenIndex];
-    const candidateRomaji = currentToken.defaultRomaji;
-    const nextChar = candidateRomaji[this.typedRomajiInToken.length];
-    
+    const t = this.tokens[this.tokenIndex];
+    const nextChar = t.defaultRomaji[this.typedRomajiInToken.length];
     this.keyboard.setNextTargetKey(nextChar);
   }
 
   handleKeyDown(e) {
     if (e.ctrlKey || e.altKey || e.metaKey) return;
-
-    // Handle Space Key to start countdown when waiting
-    if (this.isWaitingForSpaceToStart) {
-      if (e.code === 'Space' || e.key === ' ') {
-        e.preventDefault();
-        this.startCountdown(() => {
-          this.highlightKeyboardNextKey();
-        });
-      }
-      return;
-    }
-
-    if (this.isCountingDown) return;
     if (e.key.length !== 1 || !/[a-zA-Z\-\s,.]/i.test(e.key)) return;
 
     if (!this.startTime) {
@@ -242,15 +145,14 @@ export class TypingEngine {
     if (this.tokenIndex >= this.tokens.length) return;
 
     const currentToken = this.tokens[this.tokenIndex];
-    const validCandidates = currentToken.romajiCandidates;
-    const currentOffset = this.typedRomajiInToken.length;
+    const offset = this.typedRomajiInToken.length;
     let isCorrect = false;
-    let matchedRomajiCandidate = null;
+    let matchedCand = null;
 
-    for (let cand of validCandidates) {
-      if (cand[currentOffset] === pressedKey && cand.startsWith(this.typedRomajiInToken + pressedKey)) {
+    for (const cand of currentToken.romajiCandidates) {
+      if (cand[offset] === pressedKey && cand.startsWith(this.typedRomajiInToken + pressedKey)) {
         isCorrect = true;
-        matchedRomajiCandidate = cand;
+        matchedCand = cand;
         break;
       }
     }
@@ -260,8 +162,8 @@ export class TypingEngine {
       this.correctKeystrokes++;
       this.typedRomajiInToken += pressedKey;
 
-      const fullMatch = validCandidates.find(c => c === this.typedRomajiInToken);
-      if (fullMatch || this.typedRomajiInToken.length >= (matchedRomajiCandidate ? matchedRomajiCandidate.length : 1)) {
+      if (currentToken.romajiCandidates.includes(this.typedRomajiInToken)
+          || this.typedRomajiInToken.length >= (matchedCand?.length || 1)) {
         this.tokenIndex++;
         this.typedRomajiInToken = '';
       }
@@ -285,58 +187,46 @@ export class TypingEngine {
     const timeSec = Math.max(1, (Date.now() - this.startTime) / 1000);
     const kpm = Math.round((this.correctKeystrokes / timeSec) * 60);
     const accuracy = Math.round((this.correctKeystrokes / (this.totalKeystrokes || 1)) * 100);
-
     const user = auth.getCurrentUser();
+
     const modeNames = {
-      position: '各ポジション練習',
-      word1: '単語練習1 (あいうえお順)',
-      word2: '単語練習2',
-      bunsetsu: '文節練習',
-      short: '短文練習',
-      long: '長文練習'
+      position: '各ポジション練習', word1: '単語練習1', word2: '単語練習2',
+      bunsetsu: '文節練習', short: '短文練習', long: '長文練習'
     };
 
     await recordPracticeScore({
-      studentId: user.id,
-      studentName: user.name,
-      modeName: modeNames[this.currentMode] || 'タイピング練習',
-      kpm: kpm,
-      accuracy: accuracy,
-      timeSec: Math.round(timeSec)
+      studentId: user.id, studentName: user.name,
+      modeName: modeNames[this.currentMode] || '練習',
+      kpm, accuracy, timeSec: Math.round(timeSec)
     });
 
     setTimeout(() => {
       if (this.currentMode === 'long') {
-        const item = PRACTICE_DATA.long[this.itemIndex % PRACTICE_DATA.long.length];
+        const longItem = PRACTICE_DATA.long[this.itemIndex % PRACTICE_DATA.long.length];
         this.passageIndex++;
-        if (this.passageIndex >= item.passages.length) {
+        if (this.passageIndex >= longItem.passages.length) {
           this.passageIndex = 0;
           this.itemIndex++;
         }
       } else {
         this.itemIndex++;
       }
-
       this.resetSession();
-      this.showReadyPrompt();
+      this.loadCurrentItem();
     }, 400);
   }
 
   updateStatsUI() {
-    const kpmEl = document.getElementById('stat-kpm');
-    const accEl = document.getElementById('stat-acc');
-    const timeEl = document.getElementById('stat-time');
-
-    let timeSec = 0;
-    if (this.startTime) {
-      timeSec = (Date.now() - this.startTime) / 1000;
-    }
-
+    const timeSec = this.startTime ? (Date.now() - this.startTime) / 1000 : 0;
     const kpm = timeSec > 0 ? Math.round((this.correctKeystrokes / timeSec) * 60) : 0;
-    const accuracy = this.totalKeystrokes > 0 ? Math.round((this.correctKeystrokes / this.totalKeystrokes) * 100) : 100;
+    const acc = this.totalKeystrokes > 0
+      ? Math.round((this.correctKeystrokes / this.totalKeystrokes) * 100) : 100;
 
-    if (kpmEl) kpmEl.textContent = kpm;
-    if (accEl) accEl.textContent = `${accuracy}%`;
-    if (timeEl) timeEl.textContent = `${Math.round(timeSec)}s`;
+    const k = document.getElementById('stat-kpm');
+    const a = document.getElementById('stat-acc');
+    const t = document.getElementById('stat-time');
+    if (k) k.textContent = kpm;
+    if (a) a.textContent = `${acc}%`;
+    if (t) t.textContent = `${Math.round(timeSec)}s`;
   }
 }

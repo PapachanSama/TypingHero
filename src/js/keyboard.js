@@ -1,5 +1,5 @@
 /**
- * Interactive On-Screen Keyboard Component & Playgram-Style Line-Art Hands Visualizer
+ * Interactive On-Screen Keyboard + Simple Flat Hand Illustrations (below keyboard)
  */
 
 const KEYBOARD_LAYOUT = [
@@ -44,6 +44,19 @@ const KEYBOARD_LAYOUT = [
   ]
 ];
 
+// Finger color mapping
+const FINGER_COLORS = {
+  'left-pinky':   '#f43f5e',
+  'left-ring':    '#fb923c',
+  'left-middle':  '#facc15',
+  'left-index':   '#4ade80',
+  'right-index':  '#38bdf8',
+  'right-middle': '#818cf8',
+  'right-ring':   '#c084fc',
+  'right-pinky':  '#f472b6',
+  'thumb':        '#94a3b8'
+};
+
 export class VirtualKeyboard {
   constructor(containerId) {
     this.container = document.getElementById(containerId);
@@ -58,130 +71,147 @@ export class VirtualKeyboard {
     const wrapper = document.createElement('div');
     wrapper.className = 'keyboard-hands-wrapper';
 
-    // 1. Keyboard Grid
+    // Keyboard Grid
     const kbGrid = document.createElement('div');
     kbGrid.className = 'keyboard-grid';
 
     KEYBOARD_LAYOUT.forEach((row) => {
       const rowDiv = document.createElement('div');
       rowDiv.className = 'keyboard-row';
-
       row.forEach((k) => {
         const keyBtn = document.createElement('div');
         keyBtn.className = `key-cap finger-${k.finger} ${k.wide ? 'key-wide' : ''}`;
         keyBtn.dataset.key = k.key.toLowerCase();
         keyBtn.dataset.finger = k.finger;
         keyBtn.innerHTML = `<span>${k.label}</span>`;
+        // Apply finger color border
+        keyBtn.style.borderTopColor = FINGER_COLORS[k.finger] || '#ffffff';
         rowDiv.appendChild(keyBtn);
       });
-
       kbGrid.appendChild(rowDiv);
     });
 
-    // 2. Playgram-style SVG Hands Overlay
-    const handsSvgOverlay = document.createElement('div');
-    handsSvgOverlay.className = 'playgram-hands-overlay';
-    handsSvgOverlay.innerHTML = this.renderPlaygramHandsSVG();
+    // Flat Hand Illustrations Below Keyboard
+    const handsEl = document.createElement('div');
+    handsEl.className = 'flat-hands-row';
+    handsEl.innerHTML = this.buildHandsHTML();
 
     wrapper.appendChild(kbGrid);
-    wrapper.appendChild(handsSvgOverlay);
+    wrapper.appendChild(handsEl);
     this.container.appendChild(wrapper);
 
     this.bindEvents();
   }
 
-  renderPlaygramHandsSVG() {
-    return `
-      <svg class="hands-svg" viewBox="0 0 1000 450" preserveAspectRatio="xMidYMid meet">
-        <!-- Left Hand Outline -->
-        <g class="hand-group hand-left-group">
-          <!-- Left Pinky -->
-          <path class="finger-path finger-left-pinky" data-finger="left-pinky"
-            d="M 220 380 Q 230 200 280 130 Q 300 130 300 160 Q 270 230 250 380 Z" />
-          <!-- Left Ring -->
-          <path class="finger-path finger-left-ring" data-finger="left-ring"
-            d="M 270 380 Q 310 160 340 100 Q 365 100 365 130 Q 330 200 305 380 Z" />
-          <!-- Left Middle -->
-          <path class="finger-path finger-left-middle" data-finger="left-middle"
-            d="M 320 380 Q 380 140 405 80 Q 430 80 430 110 Q 400 190 355 380 Z" />
-          <!-- Left Index -->
-          <path class="finger-path finger-left-index" data-finger="left-index"
-            d="M 370 380 Q 440 160 470 100 Q 495 100 495 130 Q 450 200 405 380 Z" />
-          <!-- Left Thumb -->
-          <path class="finger-path finger-left-thumb" data-finger="thumb"
-            d="M 410 380 Q 470 280 520 250 Q 535 260 520 280 Q 470 320 440 380 Z" />
-          <!-- Left Palm Outline -->
-          <path class="palm-outline" d="M 200 450 Q 220 350 250 320 Q 380 340 440 450 Z" />
-        </g>
+  buildHandsHTML() {
+    // Skin color matching user's uploaded hand image
+    const skin = '#f9c5a0';
+    const skinDark = '#e8a878';
 
-        <!-- Right Hand Outline -->
-        <g class="hand-group hand-right-group">
-          <!-- Right Thumb -->
-          <path class="finger-path finger-right-thumb" data-finger="thumb"
-            d="M 590 380 Q 530 280 480 250 Q 465 260 480 280 Q 530 320 560 380 Z" />
-          <!-- Right Index -->
-          <path class="finger-path finger-right-index" data-finger="right-index"
-            d="M 630 380 Q 560 160 530 100 Q 505 100 505 130 Q 550 200 595 380 Z" />
-          <!-- Right Middle -->
-          <path class="finger-path finger-right-middle" data-finger="right-middle"
-            d="M 680 380 Q 620 140 595 80 Q 570 80 570 110 Q 600 190 645 380 Z" />
-          <!-- Right Ring -->
-          <path class="finger-path finger-right-ring" data-finger="right-ring"
-            d="M 730 380 Q 690 160 660 100 Q 635 100 635 130 Q 670 200 695 380 Z" />
-          <!-- Right Pinky -->
-          <path class="finger-path finger-right-pinky" data-finger="right-pinky"
-            d="M 780 380 Q 770 200 720 130 Q 700 130 700 160 Q 730 230 750 380 Z" />
-          <!-- Right Palm Outline -->
-          <path class="palm-outline" d="M 800 450 Q 780 350 750 320 Q 620 340 560 450 Z" />
-        </g>
-      </svg>
-    `;
+    const leftHand = `
+      <div class="hand-illust hand-left" id="hand-left">
+        <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+          <!-- Palm -->
+          <ellipse cx="140" cy="185" rx="100" ry="68" fill="${skin}" />
+          <!-- Thumb (right side of left hand) -->
+          <ellipse class="finger-part" data-finger="thumb"
+            cx="228" cy="170" rx="26" ry="42"
+            transform="rotate(30 228 170)"
+            fill="${skin}" stroke="${skinDark}" stroke-width="2"/>
+          <!-- Index -->
+          <rect class="finger-part" data-finger="left-index"
+            x="163" y="45" width="38" height="125" rx="19"
+            fill="${skin}" stroke="${skinDark}" stroke-width="2"/>
+          <!-- Middle -->
+          <rect class="finger-part" data-finger="left-middle"
+            x="118" y="28" width="40" height="140" rx="20"
+            fill="${skin}" stroke="${skinDark}" stroke-width="2"/>
+          <!-- Ring -->
+          <rect class="finger-part" data-finger="left-ring"
+            x="73" y="42" width="38" height="128" rx="19"
+            fill="${skin}" stroke="${skinDark}" stroke-width="2"/>
+          <!-- Pinky -->
+          <rect class="finger-part" data-finger="left-pinky"
+            x="32" y="72" width="33" height="100" rx="16"
+            fill="${skin}" stroke="${skinDark}" stroke-width="2"/>
+        </svg>
+        <span class="hand-label">左手</span>
+      </div>`;
+
+    const rightHand = `
+      <div class="hand-illust hand-right" id="hand-right">
+        <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+          <!-- Palm -->
+          <ellipse cx="140" cy="185" rx="100" ry="68" fill="${skin}" />
+          <!-- Thumb (left side of right hand) -->
+          <ellipse class="finger-part" data-finger="thumb"
+            cx="52" cy="170" rx="26" ry="42"
+            transform="rotate(-30 52 170)"
+            fill="${skin}" stroke="${skinDark}" stroke-width="2"/>
+          <!-- Index -->
+          <rect class="finger-part" data-finger="right-index"
+            x="79" y="45" width="38" height="125" rx="19"
+            fill="${skin}" stroke="${skinDark}" stroke-width="2"/>
+          <!-- Middle -->
+          <rect class="finger-part" data-finger="right-middle"
+            x="122" y="28" width="40" height="140" rx="20"
+            fill="${skin}" stroke="${skinDark}" stroke-width="2"/>
+          <!-- Ring -->
+          <rect class="finger-part" data-finger="right-ring"
+            x="169" y="42" width="38" height="128" rx="19"
+            fill="${skin}" stroke="${skinDark}" stroke-width="2"/>
+          <!-- Pinky -->
+          <rect class="finger-part" data-finger="right-pinky"
+            x="215" y="72" width="33" height="100" rx="16"
+            fill="${skin}" stroke="${skinDark}" stroke-width="2"/>
+        </svg>
+        <span class="hand-label">右手</span>
+      </div>`;
+
+    return leftHand + rightHand;
   }
 
   bindEvents() {
     window.addEventListener('keydown', (e) => {
-      const keyStr = e.key.toLowerCase();
-      const el = this.container.querySelector(`.key-cap[data-key="${keyStr}"]`);
-      if (el) {
-        el.classList.add('key-pressed');
-      }
+      const el = this.container.querySelector(`.key-cap[data-key="${e.key.toLowerCase()}"]`);
+      if (el) el.classList.add('key-pressed');
     });
-
     window.addEventListener('keyup', (e) => {
-      const keyStr = e.key.toLowerCase();
-      const el = this.container.querySelector(`.key-cap[data-key="${keyStr}"]`);
-      if (el) {
-        el.classList.remove('key-pressed');
-      }
+      const el = this.container.querySelector(`.key-cap[data-key="${e.key.toLowerCase()}"]`);
+      if (el) el.classList.remove('key-pressed');
     });
   }
 
   setNextTargetKey(char) {
+    // Clear previous key highlight
     if (this.activeTargetKey) {
-      const prevEl = this.container.querySelector(`.key-cap[data-key="${this.activeTargetKey}"]`);
-      if (prevEl) prevEl.classList.remove('key-target');
+      const prev = this.container.querySelector(`.key-cap[data-key="${this.activeTargetKey}"]`);
+      if (prev) prev.classList.remove('key-target');
     }
-
-    // Reset active finger path highlight
-    this.container.querySelectorAll('.finger-path').forEach(path => {
-      path.classList.remove('finger-active');
+    // Clear all finger highlights
+    this.container.querySelectorAll('.finger-part').forEach(f => {
+      f.classList.remove('finger-active');
+      f.style.fill = '#f9c5a0';
+      f.style.filter = '';
     });
 
     if (!char) return;
-    const targetKeyStr = char.toLowerCase();
-    this.activeTargetKey = targetKeyStr;
-
-    const targetEl = this.container.querySelector(`.key-cap[data-key="${targetKeyStr}"]`);
+    this.activeTargetKey = char.toLowerCase();
+    const targetEl = this.container.querySelector(`.key-cap[data-key="${this.activeTargetKey}"]`);
     if (targetEl) {
       targetEl.classList.add('key-target');
       const fingerName = targetEl.dataset.finger;
-      this.highlightFingerPath(fingerName);
+      if (fingerName) this.highlightFinger(fingerName);
     }
   }
 
-  highlightFingerPath(fingerName) {
-    if (!fingerName) return;
-    const paths = this.container.querySelectorAll(`.finger-path[data-finger="${fingerName}"]`);
-    paths.forEach(p => p.classList.add('finger-active'));
+  highlightFinger(fingerName) {
+    const color = FINGER_COLORS[fingerName] || '#facc15';
+    const parts = this.container.querySelectorAll(`.finger-part[data-finger="${fingerName}"]`);
+    parts.forEach(f => {
+      f.style.fill = color;
+      f.style.filter = `drop-shadow(0 0 10px ${color})`;
+      f.classList.add('finger-active');
+    });
   }
 }

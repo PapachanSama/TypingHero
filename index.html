@@ -10,9 +10,39 @@
   <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=M+PLUS+Rounded+1c:wght@400;700;900&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- 1920x1080 Auto-Scaling Container -->
-  <div id="app-viewport">
-    
+
+  <!-- ============================================================
+       SCENE 1: Start Prompt (スペースキーを押して練習を始めよう！)
+       ============================================================ -->
+  <div id="scene-start" class="scene scene-active">
+    <div class="scene-start-inner">
+      <div class="scene-logo-area">
+        <span class="scene-logo-icon">⌨️</span>
+        <h1 class="scene-logo-title">タイピングヒーロー <span>JP</span></h1>
+      </div>
+      <div class="scene-start-card">
+        <div class="space-icon-anim">▶</div>
+        <p class="scene-main-msg">スペースキーを押して練習を始めよう！</p>
+        <p class="scene-sub-msg">Press SPACE to Start</p>
+      </div>
+      <div class="scene-mode-hint" id="scene-mode-label">1. 各ポジション練習</div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SCENE 2: Countdown (3 → 2 → 1 → スタート！)
+       ============================================================ -->
+  <div id="scene-countdown" class="scene">
+    <div class="countdown-center">
+      <div id="countdown-number" class="countdown-number">3</div>
+      <div class="countdown-sub">準備してください！</div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SCENE 3: Main Typing App (1920x1080)
+       ============================================================ -->
+  <div id="app-viewport" class="scene">
     <!-- Top Header Bar -->
     <header class="app-header">
       <div class="logo-area">
@@ -20,7 +50,6 @@
         <h1 class="logo-title">タイピングヒーロー <small>JP</small></h1>
       </div>
 
-      <!-- 6 Practice Mode Navigation Tabs -->
       <nav class="nav-tabs">
         <button class="nav-item active" data-tab="position">1. 各ポジション</button>
         <button class="nav-item" data-tab="word1">2. 単語1 (あいうえお)</button>
@@ -31,30 +60,25 @@
         <button class="nav-item nav-game" data-tab="game">🎮 酸性雨ゲーム</button>
       </nav>
 
-      <!-- Right Header Actions -->
       <div class="header-actions">
-        <div class="user-badge" id="btn-login" title="クリックして生徒切替">
-          <span class="user-icon">👤</span>
+        <div class="user-badge" id="btn-login">
+          <span>👤</span>
           <span id="user-display-name">ゲスト生徒</span>
         </div>
         <button class="btn btn-header" id="btn-report">📊 レポート</button>
-        <button class="btn btn-header" id="btn-sound-toggle">🔊 サウンドON</button>
+        <button class="btn btn-header" id="btn-sound-toggle">🔊 ON</button>
         <button class="btn btn-header" id="btn-theme-toggle">🌙 ダーク</button>
       </div>
     </header>
 
-    <!-- Main Content Area -->
     <main class="app-body">
-      
-      <!-- View 1: Typing Practice Mode View -->
+      <!-- Practice View -->
       <section id="practice-view" class="view-panel">
-        
-        <!-- Sub-Category Selection Bar (For Mode 1: 各ポジション練習) -->
-        <div id="sub-category-bar" class="sub-category-bar">
-          <!-- Rendered dynamically via app.js -->
-        </div>
 
-        <!-- Top Stats HUD -->
+        <!-- Sub-Category Bar -->
+        <div id="sub-category-bar" class="sub-category-bar"></div>
+
+        <!-- Stats HUD -->
         <div class="hud-bar">
           <div class="hud-card">
             <span class="hud-label">打字速度 (KPM)</span>
@@ -74,62 +98,44 @@
           </div>
         </div>
 
-        <!-- Center Text Display Card -->
+        <!-- Text Display -->
         <div class="display-card">
-          <div id="typing-display" class="japanese-text-container">
-            <!-- Dynamic Japanese Primary Display -->
-          </div>
-          <div id="romaji-guide" class="romaji-guide-container">
-            <!-- Dynamic Romaji Character Tokens -->
-          </div>
+          <div id="typing-display" class="japanese-text-container"></div>
+          <div id="romaji-guide" class="romaji-guide-container"></div>
         </div>
 
-        <!-- Bottom Virtual Keyboard & Semi-Transparent Hands Visualizer -->
-        <div id="virtual-keyboard" class="keyboard-container">
-          <!-- Rendered via keyboard.js -->
-        </div>
+        <!-- Virtual Keyboard + Hand Illustrations -->
+        <div id="virtual-keyboard" class="keyboard-container"></div>
 
       </section>
 
-      <!-- View 2: Falling Words Acid Rain Game View -->
-      <section id="game-view" class="view-panel" style="display: none;">
+      <!-- Game View -->
+      <section id="game-view" class="view-panel" style="display:none;">
         <div class="game-hud">
-          <div class="game-hud-item">スコア: <span id="game-score">0</span></div>
-          <div class="game-hud-item">コンボ: <span id="game-combo">0</span></div>
-          <div class="game-hud-item">残機: <span id="game-lives">❤️❤️❤️❤️❤️</span></div>
-          <div class="game-input-box">入力: <span id="game-input-text"></span></div>
+          <div>スコア: <span id="game-score">0</span></div>
+          <div>コンボ: <span id="game-combo">0</span></div>
+          <div>残機: <span id="game-lives">❤️❤️❤️❤️❤️</span></div>
+          <div style="color:var(--accent-color)">入力: <span id="game-input-text"></span></div>
         </div>
-        <canvas id="game-canvas" width="1400" height="600"></canvas>
+        <canvas id="game-canvas" width="1400" height="620"></canvas>
       </section>
-
     </main>
-
-    <!-- 3-Second Countdown Overlay -->
-    <div id="countdown-overlay" class="countdown-overlay" style="display: none;">
-      <div class="countdown-card">
-        <div id="countdown-text" class="countdown-number">3</div>
-        <div class="countdown-label">準備してください！ (Ready...)</div>
-      </div>
-    </div>
-
   </div>
 
-  <!-- Modal 1: Report & Leaderboard Modal -->
+  <!-- Report Modal -->
   <div id="report-modal" class="modal-backdrop">
     <div class="modal-card">
       <button class="modal-close" id="close-report-modal">&times;</button>
-      <div id="report-content" class="modal-body">
-        <!-- Rendered via report.js -->
-      </div>
+      <div id="report-content"></div>
     </div>
   </div>
 
-  <!-- Modal 2: Student Login / Profile Switch Modal -->
+  <!-- Login Modal -->
   <div id="login-modal" class="modal-backdrop">
     <div class="modal-card modal-small">
       <button class="modal-close" id="close-login-modal">&times;</button>
       <h2>👤 生徒ログイン / 新規登録</h2>
-      <p class="modal-subtext">お名前とPINコードを入力してログインしてください。</p>
+      <p style="color:var(--text-sub);margin:10px 0 24px;">お名前とPINコードを入力してください。</p>
       <form id="login-form">
         <div class="form-group">
           <label for="input-student-name">生徒のお名前</label>
