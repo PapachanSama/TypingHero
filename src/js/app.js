@@ -1,6 +1,6 @@
 /**
- * Main Application Orchestrator - Handles 3 Scenes:
- * Scene 1: Start Prompt → Scene 2: Countdown → Scene 3: Main App
+ * App.js — Scene orchestrator:
+ *   Scene 1 (Title) → Scene 2 (Category) → Scene 3 (Countdown 3-2-1) → Scene 4 (Main App)
  */
 
 import { initScaler } from './scale.js';
@@ -13,113 +13,139 @@ import { sound } from './sound.js';
 import { PRACTICE_DATA } from './data_jp.js';
 
 const MODE_NAMES = {
-  position: '各ポジション練習',
-  word1: '単語練習1 (あいうえお順)',
-  word2: '単語練習2',
-  bunsetsu: '文節練習',
-  short: '短文練習',
-  long: '長文練習',
-  game: '酸性雨ゲーム'
+  position: 'A. ポジション練習',
+  word1:    'B. 単語練習１',
+  word2:    'C. 単語練習２',
+  bunsetsu: 'D. 文節練習',
+  short:    'E. 短文練習',
+  long:     'F. 長文練習',
+  game:     'G. タイピングゲーム'
 };
 
 class App {
   constructor() {
-    this.keyboard = null;
-    this.typingEngine = null;
-    this.gameEngine = null;
-    this.reportView = null;
-    this.currentTab = 'position';
-    this.currentSubCat = 'home';
-    this.sceneState = 'start'; // 'start' | 'countdown' | 'app'
+    this.keyboard       = null;
+    this.typingEngine   = null;
+    this.gameEngine     = null;
+    this.reportView     = null;
+    this.currentTab     = 'position';
+    this.appInitialized = false;
   }
 
   async init() {
     await auth.init();
-    this.updateUserUI();
-
-    // Scene 1 space key listener
-    this.bindStartScene();
+    this.initScenes();
   }
 
-  bindStartScene() {
-    const sceneStart = document.getElementById('scene-start');
-    const modeLabel = document.getElementById('scene-mode-label');
-    if (modeLabel) modeLabel.textContent = MODE_NAMES[this.currentTab] || '1. 各ポジション練習';
+  /* =====================================================================
+     SCENE MANAGEMENT
+     ===================================================================== */
+  initScenes() {
+    /* Scene 1 → 2 : Start button */
+    document.getElementById('btn-start-title')?.addEventListener('click', () => {
+      this.showScene('scene-category');
+    });
 
-    window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' || e.key === ' ') {
-        e.preventDefault();
-        if (this.sceneState === 'start') {
-          this.startCountdown();
-        }
-      }
+    /* Scene 2 → 3 : Category card click */
+    document.querySelectorAll('.cat-card[data-mode]').forEach(card => {
+      card.addEventListener('click', () => {
+        const mode = card.dataset.mode;
+        this.currentTab = mode;
+        this.startCountdown(mode);
+      });
+    });
+
+    /* Scene 2 → 1 : Back button */
+    document.getElementById('btn-back-to-title')?.addEventListener('click', () => {
+      this.showScene('scene-title');
+    });
+
+    /* In-app nav to category screen */
+    document.getElementById('btn-to-category')?.addEventListener('click', () => {
+      this.showScene('scene-category');
     });
   }
 
-  startCountdown() {
-    this.sceneState = 'countdown';
-    this.showScene('scene-countdown');
-    sound.playKeySound();
+  showScene(sceneId) {
+    ['scene-title', 'scene-category', 'scene-countdown', 'app-viewport'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.classList.remove('scene-active'); el.style.display = 'none'; }
+    });
+    const target = document.getElementById(sceneId);
+    if (target) { target.style.display = 'flex'; target.classList.add('scene-active'); }
+  }
 
+  startCountdown(mode) {
+    this.showScene('scene-countdown');
     let count = 3;
     const numEl = document.getElementById('countdown-number');
     if (numEl) numEl.textContent = count;
+    sound.playKeySound?.();
 
     const timer = setInterval(() => {
       count--;
       if (count > 0) {
         if (numEl) numEl.textContent = count;
-        sound.playKeySound();
+        sound.playKeySound?.();
       } else if (count === 0) {
         if (numEl) numEl.textContent = 'スタート！';
-        sound.playSuccessSound();
+        sound.playSuccessSound?.();
       } else {
         clearInterval(timer);
-        this.launchApp();
+        this.launchApp(mode);
       }
     }, 800);
   }
 
-  launchApp() {
-    this.sceneState = 'app';
+  launchApp(mode) {
     this.showScene('app-viewport');
 
-    // Initialize scaler only after app is visible
-    initScaler();
+    if (!this.appInitialized) {
+      this.appInitialized = true;
+      initScaler();
+      this.keyboard     = new VirtualKeyboard('virtual-keyboard');
+      this.typingEngine = new TypingEngine(this.keyboard);
+      this.reportView   = new ReportView();
+      this.gameEngine   = new TypingGame('game-canvas');
+      this.bindInAppNav();
+      this.bindModals();
+      this.bindThemeAndSound();
+    }
 
-    this.keyboard = new VirtualKeyboard('virtual-keyboard');
-    this.typingEngine = new TypingEngine(this.keyboard);
-    this.reportView = new ReportView();
-    this.gameEngine = new TypingGame('game-canvas');
-
-    this.bindNavigation();
-    this.bindModals();
-    this.bindThemeAndSound();
-
-    this.renderSubCategories('home');
-    this.typingEngine.setMode('position', 'home');
+    this.switchTab(mode);
     this.updateUserUI();
   }
 
-  showScene(activeId) {
-    ['scene-start', 'scene-countdown', 'app-viewport'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.classList.remove('scene-active');
-        el.style.display = 'none';
-      }
+  /* =====================================================================
+     IN-APP NAV
+     ===================================================================== */
+  bindInAppNav() {
+    document.querySelectorAll('.nav-item[data-tab]').forEach(item => {
+      item.addEventListener('click', () => this.switchTab(item.dataset.tab));
     });
-    const target = document.getElementById(activeId);
-    if (target) {
-      target.style.display = activeId === 'app-viewport' ? 'flex' : 'flex';
-      target.classList.add('scene-active');
-    }
   }
 
-  updateUserUI() {
-    const user = auth.getCurrentUser();
-    const el = document.getElementById('user-display-name');
-    if (el) el.textContent = user.name + (user.role === 'admin' ? ' (管理者)' : '');
+  switchTab(tab) {
+    this.currentTab = tab;
+    document.querySelectorAll('.nav-item[data-tab]').forEach(el => {
+      el.classList.toggle('active', el.dataset.tab === tab);
+    });
+
+    const practiceView = document.getElementById('practice-view');
+    const gameView     = document.getElementById('game-view');
+
+    this.renderSubCategories('home');
+
+    if (tab === 'game') {
+      practiceView.style.display = 'none';
+      gameView.style.display     = 'flex';
+      this.gameEngine?.start();
+    } else {
+      gameView.style.display     = 'none';
+      practiceView.style.display = 'flex';
+      this.gameEngine?.stop();
+      this.typingEngine?.setMode(tab, 'home');
+    }
   }
 
   renderSubCategories(activeId) {
@@ -141,65 +167,40 @@ class App {
       btn.addEventListener('click', () => {
         bar.querySelectorAll('.btn-sub-cat').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        this.currentSubCat = cat.id;
-        this.typingEngine.setSubCategory(cat.id);
+        this.typingEngine?.setSubCategory(cat.id);
       });
       bar.appendChild(btn);
     });
   }
 
-  bindNavigation() {
-    document.querySelectorAll('.nav-item[data-tab]').forEach(item => {
-      item.addEventListener('click', () => this.switchTab(item.dataset.tab));
-    });
+  updateUserUI() {
+    const user = auth.getCurrentUser();
+    const el = document.getElementById('user-display-name');
+    if (el) el.textContent = user.name + (user.role === 'admin' ? ' (管理者)' : '');
   }
 
-  switchTab(tab) {
-    this.currentTab = tab;
-    document.querySelectorAll('.nav-item[data-tab]').forEach(el => {
-      el.classList.toggle('active', el.dataset.tab === tab);
-    });
-
-    const practiceView = document.getElementById('practice-view');
-    const gameView = document.getElementById('game-view');
-
-    this.renderSubCategories('home');
-
-    if (tab === 'game') {
-      practiceView.style.display = 'none';
-      gameView.style.display = 'flex';
-      this.gameEngine.start();
-    } else {
-      gameView.style.display = 'none';
-      practiceView.style.display = 'flex';
-      this.gameEngine.stop();
-      this.typingEngine.setMode(tab, 'home');
-    }
-  }
-
+  /* =====================================================================
+     MODALS / THEME
+     ===================================================================== */
   bindModals() {
-    // Report
     document.getElementById('btn-report')?.addEventListener('click', async () => {
       const user = auth.getCurrentUser();
       if (user.role === 'admin') await this.reportView.renderAdminDashboard();
       else await this.reportView.renderStudentReport();
       document.getElementById('report-modal')?.classList.add('show');
     });
-    document.getElementById('close-report-modal')?.addEventListener('click', () => {
-      document.getElementById('report-modal')?.classList.remove('show');
-    });
+    document.getElementById('close-report-modal')?.addEventListener('click', () =>
+      document.getElementById('report-modal')?.classList.remove('show'));
 
-    // Login
-    document.getElementById('btn-login')?.addEventListener('click', () => {
-      document.getElementById('login-modal')?.classList.add('show');
-    });
-    document.getElementById('close-login-modal')?.addEventListener('click', () => {
-      document.getElementById('login-modal')?.classList.remove('show');
-    });
+    document.getElementById('btn-login')?.addEventListener('click', () =>
+      document.getElementById('login-modal')?.classList.add('show'));
+    document.getElementById('close-login-modal')?.addEventListener('click', () =>
+      document.getElementById('login-modal')?.classList.remove('show'));
+
     document.getElementById('login-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = document.getElementById('input-student-name')?.value;
-      const pin = document.getElementById('input-student-pin')?.value || '0000';
+      const pin  = document.getElementById('input-student-pin')?.value || '0000';
       if (!name?.trim()) return;
       const res = await auth.login(name, pin);
       if (res.success) {
@@ -220,18 +221,19 @@ class App {
     });
     document.getElementById('btn-sound-toggle')?.addEventListener('click', () => {
       const en = !sound.enabled;
-      sound.toggleSound(en);
+      sound.toggleSound?.(en);
       document.getElementById('btn-sound-toggle').textContent = en ? '🔊 ON' : '🔇 OFF';
     });
   }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Show scene 1 only
-  ['scene-countdown', 'app-viewport'].forEach(id => {
+  /* Show only title scene on load */
+  ['scene-category', 'scene-countdown', 'app-viewport'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
+
   const app = new App();
   app.init();
 });

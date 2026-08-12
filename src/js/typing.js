@@ -72,7 +72,7 @@ export class TypingEngine {
       this.tokens = parseKanaToRomajiTokens(passage.kana);
       this.tokenIndex = 0;
       this.typedRomajiInToken = '';
-      this.renderTextDisplay(passage.kanji, `${longItem.title} (${this.passageIndex + 1}/${longItem.passages.length})`);
+      this.renderTextDisplay(passage.kana, passage.kanji, `${longItem.title} (${this.passageIndex + 1}/${longItem.passages.length})`);
       this.highlightKeyboardNextKey();
       return;
     } else {
@@ -84,36 +84,41 @@ export class TypingEngine {
     this.tokens = parseKanaToRomajiTokens(item.kana);
     this.tokenIndex = 0;
     this.typedRomajiInToken = '';
-    this.renderTextDisplay(item.display || item.kanji, item.title || '');
+    this.renderTextDisplay(item.kana, item.kanji || item.display || item.kana, item.title || '');
     this.highlightKeyboardNextKey();
   }
 
-  renderTextDisplay(displayText, titleText = '') {
+  renderTextDisplay(kanaText, kanjiText, titleText = '') {
     const titleEl = document.getElementById('typing-title');
     if (titleEl) titleEl.textContent = titleText;
 
-    const container = document.getElementById('typing-display');
-    if (container) {
-      container.innerHTML = '';
-      const div = document.createElement('div');
-      div.className = 'primary-text';
-      div.textContent = displayText;
-      container.appendChild(div);
+    const kanaEl = document.getElementById('typing-row-kana');
+    if (kanaEl) {
+      kanaEl.textContent = kanaText;
     }
+
+    const kanjiEl = document.getElementById('typing-row-kanji');
+    if (kanjiEl) {
+      kanjiEl.textContent = kanjiText;
+    }
+
     this.updateRomajiGuideDisplay();
   }
 
   updateRomajiGuideDisplay() {
-    const el = document.getElementById('romaji-guide');
+    const el = document.getElementById('typing-row-romaji');
     if (!el) return;
     let html = '';
     this.tokens.forEach((t, idx) => {
+      const defaultRomajiUpper = t.defaultRomaji.toUpperCase();
       if (idx < this.tokenIndex) {
-        html += `<span class="token token-done">${t.defaultRomaji}</span>`;
+        html += `<span class="token token-done">${defaultRomajiUpper}</span>`;
       } else if (idx === this.tokenIndex) {
-        html += `<span class="token token-active"><span class="typed">${this.typedRomajiInToken}</span>${t.defaultRomaji.slice(this.typedRomajiInToken.length)}</span>`;
+        const typedUpper = this.typedRomajiInToken.toUpperCase();
+        const remainingUpper = t.defaultRomaji.slice(this.typedRomajiInToken.length).toUpperCase();
+        html += `<span class="token token-active"><span class="typed">${typedUpper}</span>${remainingUpper}</span>`;
       } else {
-        html += `<span class="token">${t.defaultRomaji}</span>`;
+        html += `<span class="token">${defaultRomajiUpper}</span>`;
       }
     });
     el.innerHTML = html;

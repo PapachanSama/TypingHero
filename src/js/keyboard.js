@@ -110,7 +110,7 @@ export class VirtualKeyboard {
 
     const leftHand = `
       <div class="hand-illust hand-left" id="hand-left">
-        <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+        <svg class="flat-hand-svg" viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
           <!-- Palm -->
           <ellipse cx="140" cy="185" rx="100" ry="68" fill="${skin}" />
           <!-- Thumb (right side of left hand) -->
@@ -140,7 +140,7 @@ export class VirtualKeyboard {
 
     const rightHand = `
       <div class="hand-illust hand-right" id="hand-right">
-        <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+        <svg class="flat-hand-svg" viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
           <!-- Palm -->
           <ellipse cx="140" cy="185" rx="100" ry="68" fill="${skin}" />
           <!-- Thumb (left side of right hand) -->
