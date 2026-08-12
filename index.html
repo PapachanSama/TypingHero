@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="./style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=M+PLUS+Rounded+1c:wght@400;700;900&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=M+PLUS+Rounded+1c:wght@400;700;900&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
   <!-- 1920x1080 Auto-Scaling Container -->
@@ -49,6 +49,11 @@
       <!-- View 1: Typing Practice Mode View -->
       <section id="practice-view" class="view-panel">
         
+        <!-- Sub-Category Selection Bar (For Mode 1: 各ポジション練習) -->
+        <div id="sub-category-bar" class="sub-category-bar">
+          <!-- Rendered dynamically via app.js -->
+        </div>
+
         <!-- Top Stats HUD -->
         <div class="hud-bar">
           <div class="hud-card">
@@ -79,7 +84,7 @@
           </div>
         </div>
 
-        <!-- Bottom Virtual Keyboard Guide -->
+        <!-- Bottom Virtual Keyboard & Semi-Transparent Hands Visualizer -->
         <div id="virtual-keyboard" class="keyboard-container">
           <!-- Rendered via keyboard.js -->
         </div>
@@ -98,6 +103,15 @@
       </section>
 
     </main>
+
+    <!-- 3-Second Countdown Overlay -->
+    <div id="countdown-overlay" class="countdown-overlay" style="display: none;">
+      <div class="countdown-card">
+        <div id="countdown-text" class="countdown-number">3</div>
+        <div class="countdown-label">準備してください！ (Ready...)</div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Modal 1: Report & Leaderboard Modal -->

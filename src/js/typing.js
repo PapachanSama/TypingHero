@@ -1,5 +1,6 @@
 /**
- * Core Typing Engine for the 6 Japanese Practice Modes
+ * Core Typing Engine for the Japanese Practice Modes
+ * Includes 3-Second Countdown & Playgram-style sub-lessons.
  */
 
 import { PRACTICE_DATA } from './data_jp.js';
@@ -12,6 +13,7 @@ export class TypingEngine {
   constructor(keyboardInstance) {
     this.keyboard = keyboardInstance;
     this.currentMode = 'position'; // 'position', 'word1', 'word2', 'bunsetsu', 'short', 'long'
+    this.selectedSubCategoryId = 'home';
     this.itemIndex = 0;
     this.passageIndex = 0;
 
@@ -25,6 +27,9 @@ export class TypingEngine {
     this.errorCount = 0;
     this.timerInterval = null;
 
+    this.isCountingDown = false;
+    this.countdownTimer = null;
+
     this.bindEvents();
   }
 
@@ -32,12 +37,54 @@ export class TypingEngine {
     window.addEventListener('keydown', (e) => this.handleKeyDown(e));
   }
 
-  setMode(mode) {
+  setMode(mode, subCategoryId = null) {
     this.currentMode = mode;
+    if (subCategoryId) this.selectedSubCategoryId = subCategoryId;
     this.itemIndex = 0;
     this.passageIndex = 0;
     this.resetSession();
-    this.loadCurrentItem();
+    this.startCountdown(() => this.loadCurrentItem());
+  }
+
+  setSubCategory(subCategoryId) {
+    this.selectedSubCategoryId = subCategoryId;
+    this.itemIndex = 0;
+    this.resetSession();
+    this.startCountdown(() => this.loadCurrentItem());
+  }
+
+  startCountdown(callback) {
+    this.isCountingDown = true;
+    let count = 3;
+
+    const overlay = document.getElementById('countdown-overlay');
+    const textEl = document.getElementById('countdown-text');
+
+    if (overlay && textEl) {
+      overlay.style.display = 'flex';
+      textEl.textContent = count;
+      sound.playKeySound();
+
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = setInterval(() => {
+        count--;
+        if (count > 0) {
+          textEl.textContent = count;
+          sound.playKeySound();
+        } else if (count === 0) {
+          textEl.textContent = 'スタート!';
+          sound.playSuccessSound();
+        } else {
+          clearInterval(this.countdownTimer);
+          overlay.style.display = 'none';
+          this.isCountingDown = false;
+          if (callback) callback();
+        }
+      }, 750);
+    } else {
+      this.isCountingDown = false;
+      if (callback) callback();
+    }
   }
 
   resetSession() {
@@ -52,12 +99,20 @@ export class TypingEngine {
   }
 
   loadCurrentItem() {
-    const list = PRACTICE_DATA[this.currentMode];
-    if (!list || list.length === 0) return;
+    let item = null;
 
-    let item = list[this.itemIndex % list.length];
-    
-    // Special handling for Mode 6 (長文練習 - Long passages)
+    if (this.currentMode === 'position') {
+      const catObj = PRACTICE_DATA.positionCategories.find(c => c.id === this.selectedSubCategoryId) || PRACTICE_DATA.positionCategories[0];
+      const lessons = catObj.lessons;
+      item = lessons[this.itemIndex % lessons.length];
+    } else {
+      const list = PRACTICE_DATA[this.currentMode];
+      if (!list || list.length === 0) return;
+      item = list[this.itemIndex % list.length];
+    }
+
+    if (!item) return;
+
     let kanaText = item.kana;
     let displayText = item.display || item.kanji;
     let titleText = item.title || '';
@@ -80,14 +135,11 @@ export class TypingEngine {
   renderTextDisplay(displayText, titleText = '') {
     const displayContainer = document.getElementById('typing-display');
     const titleEl = document.getElementById('typing-title');
-    const romajiGuideEl = document.getElementById('romaji-guide');
 
     if (titleEl) titleEl.textContent = titleText;
 
     if (displayContainer) {
       displayContainer.innerHTML = '';
-
-      // Kanji / Japanese Primary Display
       const mainTextDiv = document.createElement('div');
       mainTextDiv.className = 'primary-text';
       mainTextDiv.textContent = displayText;
@@ -105,9 +157,8 @@ export class TypingEngine {
     this.tokens.forEach((t, idx) => {
       const isCurrent = idx === this.tokenIndex;
       const isTyped = idx < this.tokenIndex;
-      
       let tokenRomaji = t.defaultRomaji;
-      
+
       if (isCurrent) {
         html += `<span class="token token-active"><u class="typed">${this.typedRomajiInToken}</u>${tokenRomaji.slice(this.typedRomajiInToken.length)}</span>`;
       } else if (isTyped) {
@@ -135,10 +186,10 @@ export class TypingEngine {
   }
 
   handleKeyDown(e) {
+    if (this.isCountingDown) return;
     if (e.ctrlKey || e.altKey || e.metaKey) return;
     if (e.key.length !== 1 || !/[a-zA-Z\-\s,.]/i.test(e.key)) return;
 
-    // Start timer on first keypress
     if (!this.startTime) {
       this.startTime = Date.now();
       this.timerInterval = setInterval(() => this.updateStatsUI(), 200);
@@ -151,8 +202,6 @@ export class TypingEngine {
 
     const currentToken = this.tokens[this.tokenIndex];
     const validCandidates = currentToken.romajiCandidates;
-
-    // Check if pressed key matches any valid Romaji candidate at the current offset
     const currentOffset = this.typedRomajiInToken.length;
     let isCorrect = false;
     let matchedRomajiCandidate = null;
@@ -170,14 +219,12 @@ export class TypingEngine {
       this.correctKeystrokes++;
       this.typedRomajiInToken += pressedKey;
 
-      // Check if current token completed
       const fullMatch = validCandidates.find(c => c === this.typedRomajiInToken);
       if (fullMatch || this.typedRomajiInToken.length >= (matchedRomajiCandidate ? matchedRomajiCandidate.length : 1)) {
         this.tokenIndex++;
         this.typedRomajiInToken = '';
       }
 
-      // Check if entire sentence/item completed
       if (this.tokenIndex >= this.tokens.length) {
         this.onItemCompleted();
       }
@@ -198,7 +245,6 @@ export class TypingEngine {
     const kpm = Math.round((this.correctKeystrokes / timeSec) * 60);
     const accuracy = Math.round((this.correctKeystrokes / (this.totalKeystrokes || 1)) * 100);
 
-    // Record score
     const user = auth.getCurrentUser();
     const modeNames = {
       position: '各ポジション練習',
@@ -218,7 +264,6 @@ export class TypingEngine {
       timeSec: Math.round(timeSec)
     });
 
-    // Advance to next item
     setTimeout(() => {
       if (this.currentMode === 'long') {
         const item = PRACTICE_DATA.long[this.itemIndex % PRACTICE_DATA.long.length];

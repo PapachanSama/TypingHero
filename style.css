@@ -162,6 +162,43 @@ html, body {
   box-shadow: 0 0 20px rgba(236, 72, 153, 0.5);
 }
 
+/* Sub-Category Bar (Playgram Style) */
+.sub-category-bar {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  background: var(--panel-bg);
+  padding: 8px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--panel-border);
+}
+
+.btn-sub-cat {
+  background: var(--card-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--text-sub);
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-sub-cat:hover {
+  color: var(--text-main);
+  border-color: var(--accent-color);
+}
+
+.btn-sub-cat.active {
+  background: var(--accent-color);
+  color: #0f172a;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
 /* Actions Area */
 .header-actions {
   display: flex;
@@ -219,7 +256,7 @@ html, body {
 /* Body Content View */
 .app-body {
   flex: 1;
-  padding: 30px 60px;
+  padding: 20px 60px;
   display: flex;
   flex-direction: column;
 }
@@ -228,14 +265,14 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 /* HUD Bar */
 .hud-bar {
   display: flex;
   gap: 20px;
-  height: 100px;
+  height: 90px;
 }
 
 .hud-card {
@@ -244,20 +281,20 @@ html, body {
   backdrop-filter: blur(10px);
   border: 1px solid var(--panel-border);
   border-radius: 16px;
-  padding: 16px 24px;
+  padding: 14px 20px;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
 .hud-label {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-sub);
   font-weight: 700;
 }
 
 .hud-value {
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 900;
   color: var(--accent-color);
   font-family: 'Outfit', sans-serif;
@@ -269,14 +306,14 @@ html, body {
   backdrop-filter: blur(10px);
   border: 1px solid var(--panel-border);
   border-radius: 16px;
-  padding: 16px 28px;
+  padding: 14px 24px;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
 .hud-title-text {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 900;
   color: var(--text-main);
 }
@@ -287,18 +324,18 @@ html, body {
   background: var(--panel-bg);
   backdrop-filter: blur(12px);
   border: 1px solid var(--panel-border);
-  border-radius: 24px;
-  padding: 40px;
+  border-radius: 20px;
+  padding: 30px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .japanese-text-container {
-  font-size: 52px;
+  font-size: 48px;
   font-weight: 900;
   letter-spacing: 2px;
   text-align: center;
@@ -310,9 +347,9 @@ html, body {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   font-family: 'Outfit', monospace;
-  font-size: 38px;
+  font-size: 34px;
   font-weight: 700;
 }
 
@@ -340,41 +377,49 @@ html, body {
   text-decoration: none;
 }
 
-/* Virtual Keyboard */
+/* Virtual Keyboard & Semi-Transparent Hands Guide */
 .keyboard-container {
-  height: 320px;
+  min-height: 380px;
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: 24px;
-  padding: 20px 40px;
+  padding: 16px 30px;
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.keyboard-hands-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
 }
 
 .keyboard-grid {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .keyboard-row {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .key-cap {
-  width: 72px;
-  height: 60px;
+  width: 66px;
+  height: 54px;
   background: rgba(15, 23, 42, 0.8);
   border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  border-radius: 10px;
   display: flex;
   justify-content: center;
   align-items: center;
   font-family: 'Outfit', sans-serif;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
   color: var(--text-main);
   box-shadow: 0 4px 0 rgba(0, 0, 0, 0.4);
@@ -383,7 +428,7 @@ html, body {
 }
 
 .key-wide {
-  width: 400px;
+  width: 360px;
 }
 
 /* Finger Color Accents (Top Border) */
@@ -411,9 +456,117 @@ html, body {
   color: #0f172a !important;
 }
 
-@keyframes keyPulse {
-  from { transform: scale(1); }
-  to { transform: scale(1.08); }
+/* Semi-Transparent Hands Guide Layout */
+.hands-visualizer-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.hands-wrapper {
+  display: flex;
+  gap: 120px;
+  justify-content: center;
+}
+
+.hand-box {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px dashed var(--panel-border);
+  border-radius: 16px;
+  padding: 8px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.hand-label {
+  font-size: 12px;
+  color: var(--text-sub);
+  font-weight: 700;
+}
+
+.fingers-group {
+  display: flex;
+  gap: 8px;
+}
+
+.finger-node {
+  width: 44px;
+  height: 38px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-sub);
+  transition: all 0.2s ease;
+  opacity: 0.45;
+}
+
+/* Finger Glow Highlights */
+.finger-node.finger-active {
+  opacity: 1;
+  transform: scale(1.15);
+  color: #0f172a;
+  box-shadow: 0 0 15px currentColor;
+}
+
+.finger-node.finger-left-pinky.finger-active { background: var(--finger-left-pinky); box-shadow: 0 0 15px var(--finger-left-pinky); }
+.finger-node.finger-left-ring.finger-active { background: var(--finger-left-ring); box-shadow: 0 0 15px var(--finger-left-ring); }
+.finger-node.finger-left-middle.finger-active { background: var(--finger-left-middle); box-shadow: 0 0 15px var(--finger-left-middle); }
+.finger-node.finger-left-index.finger-active { background: var(--finger-left-index); box-shadow: 0 0 15px var(--finger-left-index); }
+.finger-node.finger-right-index.finger-active { background: var(--finger-right-index); box-shadow: 0 0 15px var(--finger-right-index); }
+.finger-node.finger-right-middle.finger-active { background: var(--finger-right-middle); box-shadow: 0 0 15px var(--finger-right-middle); }
+.finger-node.finger-right-ring.finger-active { background: var(--finger-right-ring); box-shadow: 0 0 15px var(--finger-right-ring); }
+.finger-node.finger-right-pinky.finger-active { background: var(--finger-right-pinky); box-shadow: 0 0 15px var(--finger-right-pinky); }
+.finger-node.finger-left-thumb.finger-active,
+.finger-node.finger-right-thumb.finger-active { background: var(--finger-thumb); box-shadow: 0 0 15px var(--finger-thumb); }
+
+/* 3-Second Countdown Overlay */
+.countdown-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1920px;
+  height: 1080px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 800;
+}
+
+.countdown-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.countdown-number {
+  font-size: 160px;
+  font-weight: 900;
+  font-family: 'Outfit', sans-serif;
+  color: var(--accent-color);
+  text-shadow: 0 0 50px var(--accent-glow);
+  animation: countdownPulse 0.7s infinite alternate;
+}
+
+.countdown-label {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+@keyframes countdownPulse {
+  from { transform: scale(0.9); opacity: 0.7; }
+  to { transform: scale(1.15); opacity: 1; }
 }
 
 /* Falling Words Game */

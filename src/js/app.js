@@ -9,6 +9,7 @@ import { TypingGame } from './game.js';
 import { auth } from './auth.js';
 import { ReportView } from './report.js';
 import { sound } from './sound.js';
+import { PRACTICE_DATA } from './data_jp.js';
 
 class App {
   constructor() {
@@ -16,30 +17,26 @@ class App {
     this.typingEngine = null;
     this.gameEngine = null;
     this.reportView = null;
-    this.currentTab = 'position'; // 'position', 'word1', 'word2', 'bunsetsu', 'short', 'long', 'game'
+    this.currentTab = 'position';
   }
 
   async init() {
-    // 1. InitializeScaler (1920x1080 auto-fit)
     initScaler();
-
-    // 2. Initialize Auth
     await auth.init();
     this.updateUserUI();
 
-    // 3. Initialize Keyboard & Typing Engine
     this.keyboard = new VirtualKeyboard('virtual-keyboard');
     this.typingEngine = new TypingEngine(this.keyboard);
     this.reportView = new ReportView();
     this.gameEngine = new TypingGame('game-canvas');
 
-    // 4. Bind UI Event Listeners
     this.bindNavigation();
+    this.bindSubCategoryNavigation();
     this.bindModals();
     this.bindThemeAndSound();
 
-    // 5. Start default mode
-    this.typingEngine.setMode('position');
+    this.renderSubCategories('home');
+    this.typingEngine.setMode('position', 'home');
   }
 
   updateUserUI() {
@@ -60,16 +57,47 @@ class App {
     });
   }
 
+  renderSubCategories(activeId = 'home') {
+    const container = document.getElementById('sub-category-bar');
+    if (!container) return;
+
+    if (this.currentTab !== 'position') {
+      container.style.display = 'none';
+      return;
+    }
+
+    container.style.display = 'flex';
+    container.innerHTML = '';
+
+    PRACTICE_DATA.positionCategories.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = `btn-sub-cat ${cat.id === activeId ? 'active' : ''}`;
+      btn.dataset.cat = cat.id;
+      btn.textContent = cat.name;
+      btn.addEventListener('click', () => {
+        container.querySelectorAll('.btn-sub-cat').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.typingEngine.setSubCategory(cat.id);
+      });
+      container.appendChild(btn);
+    });
+  }
+
+  bindSubCategoryNavigation() {
+    // Handled in renderSubCategories
+  }
+
   switchTab(tab) {
     this.currentTab = tab;
     
-    // Update active nav button
     document.querySelectorAll('.nav-item[data-tab]').forEach(el => {
       el.classList.toggle('active', el.dataset.tab === tab);
     });
 
     const practiceView = document.getElementById('practice-view');
     const gameView = document.getElementById('game-view');
+
+    this.renderSubCategories('home');
 
     if (tab === 'game') {
       if (practiceView) practiceView.style.display = 'none';
@@ -79,12 +107,11 @@ class App {
       if (gameView) gameView.style.display = 'none';
       if (practiceView) practiceView.style.display = 'flex';
       this.gameEngine.stop();
-      this.typingEngine.setMode(tab);
+      this.typingEngine.setMode(tab, 'home');
     }
   }
 
   bindModals() {
-    // Report Modal
     const reportBtn = document.getElementById('btn-report');
     const reportModal = document.getElementById('report-modal');
     const closeReportBtn = document.getElementById('close-report-modal');
@@ -107,7 +134,6 @@ class App {
       });
     }
 
-    // Login / Student Switch Modal
     const loginBtn = document.getElementById('btn-login');
     const loginModal = document.getElementById('login-modal');
     const closeLoginBtn = document.getElementById('close-login-modal');
@@ -146,7 +172,6 @@ class App {
   }
 
   bindThemeAndSound() {
-    // Theme Toggle (Pastel <-> Dark Cyber)
     const themeBtn = document.getElementById('btn-theme-toggle');
     if (themeBtn) {
       themeBtn.addEventListener('click', () => {
@@ -156,7 +181,6 @@ class App {
       });
     }
 
-    // Sound Toggle
     const soundBtn = document.getElementById('btn-sound-toggle');
     if (soundBtn) {
       soundBtn.addEventListener('click', () => {
@@ -168,7 +192,6 @@ class App {
   }
 }
 
-// Start app on DOMContentLoaded
 window.addEventListener('DOMContentLoaded', () => {
   const app = new App();
   app.init();

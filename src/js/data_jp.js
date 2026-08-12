@@ -4,22 +4,63 @@
  */
 
 export const PRACTICE_DATA = {
-  // Mode 1: 各ポジション練習 (Key Position & Home Position Practice)
+  // Mode 1: 各ポジション練習 (Playgram Typing style detailed sub-lessons)
+  positionCategories: [
+    {
+      id: 'home',
+      name: 'ホームポジション',
+      lessons: [
+        { title: '左手ホーム (a s d f)', kana: 'あさだふあさだふ', display: 'あさだふ あさだふ' },
+        { title: '右手ホーム (j k l ;)', kana: 'じかけりじかけり', display: 'じかけり じかけり' },
+        { title: '両手基本 (f j d k s l a ;)', kana: 'ふじてきさりあれふじてき', display: 'ふじ てき さり あれ' }
+      ]
+    },
+    {
+      id: 'top',
+      name: '上段ポジション',
+      lessons: [
+        { title: '左手上段 (q w e r t)', kana: 'たていすかんたていすかん', display: 'たていすかん たていすかん' },
+        { title: '右手上段 (y u i o p)', kana: 'んなにせらんなにせら', display: 'んなにせら んなにせら' },
+        { title: '上段まとめ (q~p)', kana: 'たていすかんなにせら', display: 'たていすかん なにせら' }
+      ]
+    },
+    {
+      id: 'bottom',
+      name: '下段ポジション',
+      lessons: [
+        { title: '左手下段 (z x c v b)', kana: 'つさそひこつさそひこ', display: 'つさそひこ つさそひこ' },
+        { title: '右手下段 (n m , .)', kana: 'みもねるみもねる', display: 'みもねる みもねる' },
+        { title: '下段まとめ (z~.)', kana: 'つさそひこみもねる', display: 'つさそひこ みもねる' }
+      ]
+    },
+    {
+      id: 'gojuon',
+      name: '50音・指別練習',
+      lessons: [
+        { title: 'あ行 (あいうえお)', kana: 'あいうえおあいうえお', display: 'あいうえお あいうえお' },
+        { title: 'か行 (かきくけこ)', kana: 'かきくけこかきくけこ', display: 'かきくけこ かきくけこ' },
+        { title: 'さ行 (さしすせそ)', kana: 'さしすせそさしすせそ', display: 'さしすせそ さしすせそ' },
+        { title: 'た行 (たちつてと)', kana: 'たちつてとたちつてと', display: 'たちつてと たちつてと' },
+        { title: 'な行 (なにぬねの)', kana: 'なにぬねのなにぬねの', display: 'なにぬねの なにぬねの' },
+        { title: 'は行 (はひふへほ)', kana: 'はひふへほはひふへほ', display: 'はひふへほ はひふへほ' },
+        { title: 'ま行 (まみむめも)', kana: 'まみむめもまみむめも', display: 'まみむめも まみむめも' },
+        { title: 'や行 (やゆよ)', kana: 'やゆよやゆよ', display: 'やゆよ やゆよ' },
+        { title: 'ら行 (らりるれろ)', kana: 'らりるれろらりるれろ', display: 'らりるれろ らりるれろ' },
+        { title: 'わ行 (わをん)', kana: 'わをんわをん', display: 'わをん わをん' },
+        { title: '小指特訓 (a, z, q, p)', kana: 'あつたせあつたせ', display: 'あつたせ あつたせ' },
+        { title: '薬指特訓 (s, x, w, o)', kana: 'とさてらとさてら', display: 'とさてら とさてら' },
+        { title: '中指特訓 (d, c, e, i)', kana: 'しそいにかしそいにか', display: 'しそいにか しそいにか' },
+        { title: '人差し指特訓 (f, v, r, g, b, j, m, u, h, n)', kana: 'ふひすきこじみになん', display: 'ふひすきこ じみになん' }
+      ]
+    }
+  ],
+
+  // Legacy position fallback
   position: [
     { title: 'ホームポジション (fj)', kana: 'ふじふじ', display: 'ふじふじ' },
     { title: 'ホームポジション (dk)', kana: 'てきてき', display: 'てきてき' },
-    { title: 'ホームポジション (sl)', kana: 'さりさり', display: 'さりさり' },
-    { title: 'ホームポジション (a;)', kana: 'あれあれ', display: 'あれあれ' },
     { title: 'あ行ポジション', kana: 'あいうえお', display: 'あいうえお' },
-    { title: 'か行ポジション', kana: 'かきくけこ', display: 'かきくけこ' },
-    { title: 'さ行ポジション', kana: 'さしすせそ', display: 'さしすせそ' },
-    { title: 'た行ポジション', kana: 'たちつてと', display: 'たちつてと' },
-    { title: 'な行ポジション', kana: 'なにぬねの', display: 'なにぬねの' },
-    { title: 'は行ポジション', kana: 'はひふへほ', display: 'はひふへほ' },
-    { title: 'ま行ポジション', kana: 'まみむめも', display: 'まみむめも' },
-    { title: 'や行ポジション', kana: 'やゆよ', display: 'やゆよ' },
-    { title: 'ら行ポジション', kana: 'らりるれろ', display: 'らりるれろ' },
-    { title: 'わ行ポジション', kana: 'わをん', display: 'わをん' }
+    { title: 'か行ポジション', kana: 'かきくけこ', display: 'かきくけこ' }
   ],
 
   // Mode 2: 単語練習1 (あいうえお順 - AIUEO Order Words)
