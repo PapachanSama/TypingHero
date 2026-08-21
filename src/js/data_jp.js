@@ -1,10 +1,11 @@
 /**
  * Japanese Practice Dataset for 6 Stages
- * All content in 100% Japanese with Kana & Furigana readings.
+ * Includes Detailed Playgram-style Positional Lessons and
+ * 10-Row Hiragana Word Lists (A-gyo to Wa-gyo) for Grade 3 level.
  */
 
 export const PRACTICE_DATA = {
-  // Mode 1: 各ポジション練習 (Playgram Typing style detailed sub-lessons)
+  // Mode 1: 各ポジション練習
   positionCategories: [
     {
       id: 'home',
@@ -46,45 +47,119 @@ export const PRACTICE_DATA = {
         { title: 'ま行 (まみむめも)', kana: 'まみむめもまみむめも', display: 'まみむめも まみむめも' },
         { title: 'や行 (やゆよ)', kana: 'やゆよやゆよ', display: 'やゆよ やゆよ' },
         { title: 'ら行 (らりるれろ)', kana: 'らりるれろらりるれろ', display: 'らりるれろ らりるれろ' },
-        { title: 'わ行 (わをん)', kana: 'わをんわをん', display: 'わをん わをん' },
-        { title: '小指特訓 (a, z, q, p)', kana: 'あつたせあつたせ', display: 'あつたせ あつたせ' },
-        { title: '薬指特訓 (s, x, w, o)', kana: 'とさてらとさてら', display: 'とさてら とさてら' },
-        { title: '中指特訓 (d, c, e, i)', kana: 'しそいにかしそいにか', display: 'しそいにか しそいにか' },
-        { title: '人差し指特訓 (f, v, r, g, b, j, m, u, h, n)', kana: 'ふひすきこじみになん', display: 'ふひすきこ じみになん' }
+        { title: 'わ行 (わをん)', kana: 'わをんわをん', display: 'わをん わをん' }
       ]
     }
   ],
 
-  // Legacy position fallback
-  position: [
-    { title: 'ホームポジション (fj)', kana: 'ふじふじ', display: 'ふじふじ' },
-    { title: 'ホームポジション (dk)', kana: 'てきてき', display: 'てきてき' },
-    { title: 'あ行ポジション', kana: 'あいうえお', display: 'あいうえお' },
-    { title: 'か行ポジション', kana: 'かきくけこ', display: 'かきくけこ' }
-  ],
-
-  // Mode 2: 単語練習1 (あいうえお順 - AIUEO Order Words)
-  word1: [
-    { kanji: '朝', kana: 'あさ', display: '朝 (あさ)' },
-    { kanji: '犬', kana: 'いぬ', display: '犬 (いぬ)' },
-    { kanji: '海', kana: 'うみ', display: '海 (うみ)' },
-    { kanji: '駅', kana: 'えき', display: '駅 (えき)' },
-    { kanji: '音楽', kana: 'おんがく', display: '音楽 (おんがく)' },
-    { kanji: '川', kana: 'かわ', display: '川 (かわ)' },
-    { kanji: '木', kana: 'き', display: '木 (き)' },
-    { kanji: '車', kana: 'くるま', display: '車 (くるま)' },
-    { kanji: '景色', kana: 'けしき', display: '景色 (けしき)' },
-    { kanji: '公園', kana: 'こうえん', display: '公園 (こうえん)' },
-    { kanji: '魚', kana: 'さかな', display: '魚 (さかな)' },
-    { kanji: '空', kana: 'そら', display: '空 (そら)' },
-    { kanji: '太陽', kana: 'たいよう', display: '太陽 (たいよう)' },
-    { kanji: '鳥', kana: 'とり', display: '鳥 (とり)' },
-    { kanji: '夏', kana: 'なつ', display: '夏 (なつ)' },
-    { kanji: '花', kana: 'はな', display: '花 (はな)' },
-    { kanji: '星', kana: 'ほし', display: '星 (ほし)' },
-    { kanji: '山', kana: 'やま', display: '山 (やま)' },
-    { kanji: '夢', kana: 'ゆめ', display: '夢 (ゆめ)' },
-    { kanji: '桜', kana: 'さくら', display: '桜 (さくら)' }
+  // Mode 2: 単語練習1 (あ行〜わ行のひらがな 5つずつのレッスン)
+  word1Categories: [
+    {
+      id: 'a-gyo',
+      name: 'あ行',
+      lessons: [
+        { char: 'あ', title: '「あ」の単語', words: ['あいす', 'あめ', 'あさ', 'あり', 'あお'] },
+        { char: 'い', title: '「い」の単語', words: ['いぬ', 'いちご', 'いと', 'いえ', 'いけ'] },
+        { char: 'う', title: '「う」の単語', words: ['うみ', 'うた', 'うち', 'うし', 'うさぎ'] },
+        { char: 'え', title: '「え」の単語', words: ['えんぴつ', 'えほん', 'えき', 'えだ', 'えのぐ'] },
+        { char: 'お', title: '「お」の単語', words: ['おんがく', 'おかね', 'おにぎり', 'おもちゃ', 'おおきい'] }
+      ]
+    },
+    {
+      id: 'ka-gyo',
+      name: 'か行',
+      lessons: [
+        { char: 'か', title: '「か」の単語', words: ['かわ', 'かさ', 'かめ', 'かに', 'かぜ'] },
+        { char: 'き', title: '「き」の単語', words: ['きつね', 'きいろ', 'きっぷ', 'きもの', 'きゅうり'] },
+        { char: 'く', title: '「く」の単語', words: ['くるま', 'くつ', 'くも', 'くま', 'くすり'] },
+        { char: 'け', title: '「け」の単語', words: ['けしごむ', 'けむり', 'けいと', 'けしき', 'けんか'] },
+        { char: 'こ', title: '「こ」の単語', words: ['こめ', 'こま', 'こいぬ', 'ことり', 'こえ'] }
+      ]
+    },
+    {
+      id: 'sa-gyo',
+      name: 'さ行',
+      lessons: [
+        { char: 'さ', title: '「さ」の単語', words: ['さかな', 'さくら', 'さる', 'さんぽ', 'さとう'] },
+        { char: 'し', title: '「し」の単語', words: ['しお', 'しんぶん', 'しか', 'しっぽ', 'しんごう'] },
+        { char: 'す', title: '「す」の単語', words: ['すいか', 'すずめ', 'すな', 'すし', 'すべりだい'] },
+        { char: 'せ', title: '「せ」の単語', words: ['せんせい', 'せなか', 'せっけん', 'せんぷうき', 'せみ'] },
+        { char: 'そ', title: '「そ」の単語', words: ['そら', 'そーだ', 'そば', 'そり', 'そと'] }
+      ]
+    },
+    {
+      id: 'ta-gyo',
+      name: 'た行',
+      lessons: [
+        { char: 'た', title: '「た」の単語', words: ['たいよう', 'たけ', 'たまご', 'たぬき', 'たこ'] },
+        { char: 'ち', title: '「ち」の単語', words: ['ちず', 'ちきゅう', 'ちから', 'ちち', 'ちゅうりっぷ'] },
+        { char: 'つ', title: '「つ」の単語', words: ['つくえ', 'つき', 'つばめ', 'つち', 'つり'] },
+        { char: 'て', title: '「て」の単語', words: ['てがみ', 'てんき', 'てつぼう', 'てんとうむし', 'て'] },
+        { char: 'と', title: '「と」の単語', words: ['とら', 'とり', 'とまと', 'ともだち', 'とけい'] }
+      ]
+    },
+    {
+      id: 'na-gyo',
+      name: 'な行',
+      lessons: [
+        { char: 'な', title: '「な」の単語', words: ['なつ', 'なし', 'なわとび', 'なみ', 'なす'] },
+        { char: 'に', title: '「に」の単語', words: ['にわ', 'にし', 'にんじん', 'にじ', 'にほん'] },
+        { char: 'ぬ', title: '「ぬ」の単語', words: ['ぬりえ', 'ぬま', 'ぬの', 'ぬいぐるみ', 'ぬくもり'] },
+        { char: 'ね', title: '「ね」の単語', words: ['ねcat', 'ねんど', 'ねだん', 'ねむい', 'ねこ'] },
+        { char: 'の', title: '「の」の単語', words: ['のり', 'のこぎり', 'のはら', 'のど', 'のりもの'] }
+      ]
+    },
+    {
+      id: 'ha-gyo',
+      name: 'は行',
+      lessons: [
+        { char: 'は', title: '「は」の単語', words: ['はな', 'はし', 'はこ', 'はる', 'はっぱ'] },
+        { char: 'ひ', title: '「ひ」の単語', words: ['ひかり', 'ひこうき', 'ひつじ', 'ひまわり', 'ひがし'] },
+        { char: 'ふ', title: '「ふ」の単語', words: ['ふね', 'ふうせん', 'ふで', 'ふゆ', 'ふく'] },
+        { char: 'へ', title: '「へ」の単語', words: ['へや', 'へび', 'へいわ', 'へんじ', 'へるめっと'] },
+        { char: 'ほ', title: '「ほ」の単語', words: ['ほし', 'ほん', 'ほたる', 'ほっぺ', 'ほうき'] }
+      ]
+    },
+    {
+      id: 'ma-gyo',
+      name: 'ま行',
+      lessons: [
+        { char: 'ま', title: '「ま」の単語', words: ['まつ', 'まど', 'まくら', 'まめ', 'まち'] },
+        { char: 'み', title: '「み」の単語', words: ['みかん', 'みず', 'みち', 'みどり', 'みなみ'] },
+        { char: 'む', title: '「む」の単語', words: ['むし', 'むぎ', 'むら', 'むかし', 'むね'] },
+        { char: 'め', title: '「め」の単語', words: ['めがね', 'めだか', 'めろん', 'め', 'めいろ'] },
+        { char: 'も', title: '「も」の単語', words: ['もも', 'もり', 'もち', 'もみじ', 'もくひょう'] }
+      ]
+    },
+    {
+      id: 'ya-gyo',
+      name: 'や行',
+      lessons: [
+        { char: 'や', title: '「や」の単語', words: ['やま', 'やさい', 'やさしい', 'やね', 'やどかり'] },
+        { char: 'ゆ', title: '「ゆ」の単語', words: ['ゆき', 'ゆめ', 'ゆうやけ', 'ゆび', 'ゆうびん'] },
+        { char: 'よ', title: '「よ」の単語', words: ['よる', 'よっと', 'ようい', 'よみもの', 'よつば'] }
+      ]
+    },
+    {
+      id: 'ra-gyo',
+      name: 'ら行',
+      lessons: [
+        { char: 'ら', title: '「ら」の単語', words: ['らいおん', 'らくがき', 'らっぱ', 'らいねん', 'らくえん'] },
+        { char: 'り', title: '「り」の単語', words: ['りんご', 'りぼん', 'りす', 'りか', 'りょうり'] },
+        { char: 'る', title: '「る」の単語', words: ['るり', 'るすばん', 'るーる', 'るーぺ', 'るびー'] },
+        { char: 'れ', title: '「れ」の単語', words: ['れもん', 'れんしゅう', 'れきし', 'れいぞうこ', 'れーる'] },
+        { char: 'ろ', title: '「ろ」の単語', words: ['ろけっと', 'ろうそく', 'ろば', 'ろーぷ', 'ろうか'] }
+      ]
+    },
+    {
+      id: 'wa-gyo',
+      name: 'わ行',
+      lessons: [
+        { char: 'わ', title: '「わ」の単語', words: ['わに', 'わたあめ', 'わらい', 'わごむ', 'わたし'] },
+        { char: 'を', title: '「を」の単語', words: ['ほんをよむ', 'てをあらう', 'はなをみる', 'えをかく', 'おとをきく'] },
+        { char: 'ん', title: '「ん」の単語', words: ['しんぶん', 'でんしゃ', 'みかん', 'らいおん', 'にほん'] }
+      ]
+    }
   ],
 
   // Mode 3: 単語練習2 (General & Theme Words)
@@ -130,7 +205,7 @@ export const PRACTICE_DATA = {
     { kanji: '継続は力なり。', kana: 'けいぞくはちからなり。', display: '継続は力なり。 (けいぞくはちからなり。)' },
     { kanji: '早起きは三文の徳。', kana: 'はやおきはさんもんのとく。', display: '早起きは三文の徳。 (はやおきはさんもんのとく。)' },
     { kanji: '千里の道も一歩から。', kana: 'せんりのみちもいっぽから。', display: '千里の道も一歩から。 (せんりのみちもいっぽから。)' },
-    { kanji: '今日はとても気持ちの良い晴れの日です。', kana: 'きょうはとてもきもちのよいはれのひです。', display: '今日はとても気持ちの良い晴れの日です。' },
+    { kanji: '今日はとても気持ちの良い晴れの日です。', kana: 'きょうはとてもきもち of よい はれのひです。', display: '今日はとても気持ちの良い晴れの日です。' },
     { kanji: '図書室で面白い本を借りて読みました。', kana: 'としょしつでおもしろいほんをかりてよみました。', display: '図書室で面白い本を借りて読みました。' },
     { kanji: '失敗は成功のもとと言われています。', kana: 'しっぱいはせいこうのもとといわれています。', display: '失敗は成功のもとと言われています。' },
     { kanji: '夢に向かって毎日一歩ずつ進みましょう。', kana: 'ゆめにむかってまいにちいっぽずつすすみましょう。', display: '夢に向かって毎日一歩ずつ進みましょう。' },

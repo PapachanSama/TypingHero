@@ -470,7 +470,7 @@ html, body {
 
 /* ---- 3-Row Display Card ---- */
 .display-card {
-  height: 240px;
+  height: 340px;
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: 18px;
@@ -481,6 +481,91 @@ html, body {
   align-items: center;
   flex-shrink: 0;
   gap: 0;
+}
+
+/* ---- Word 1 Notepad Card ---- */
+.word1-notepad-card {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+  height: 340px;
+  flex-shrink: 0;
+}
+
+.notepad-panel {
+  flex: 1;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 18px;
+  padding: 16px 28px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.notepad-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-sub);
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 6px;
+}
+
+.notepad-list, .notepad-user-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.notepad-item {
+  font-size: 34px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.25);
+  font-family: 'Kosugi Maru', sans-serif;
+  letter-spacing: 2px;
+  line-height: 1.3;
+  padding: 2px 0 2px 12px;
+  transition: all 0.2s ease;
+}
+
+body.theme-pastel .notepad-item {
+  color: rgba(6, 78, 59, 0.25);
+}
+
+.notepad-item.completed {
+  color: var(--success-color) !important;
+  opacity: 0.6;
+}
+
+.notepad-item.active {
+  color: var(--text-main) !important;
+  font-weight: 900;
+  border-left: 5px solid var(--accent-color);
+  padding-left: 12px;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+.notepad-user-content .correct-char {
+  color: var(--success-color);
+}
+
+.notepad-user-content .error-char {
+  color: #ffffff;
+  background-color: #ef4444;
+  padding: 0 6px;
+  border-radius: 4px;
+  margin-left: 2px;
+  animation: errorFlash 0.3s infinite alternate;
+}
+
+@keyframes errorFlash {
+  from { box-shadow: 0 0 4px #ef4444; }
+  to   { box-shadow: 0 0 12px #ef4444; }
 }
 
 .display-row {
@@ -603,12 +688,12 @@ html, body {
   to   { transform: scale(1.08); }
 }
 
-/* ---- HAND ILLUSTRATIONS (10x larger) ---- */
+/* ---- HAND ILLUSTRATIONS (70% size of previous) ---- */
 .flat-hands-row {
   display: flex;
   justify-content: center;
-  gap: 80px;
-  padding: 6px 0 10px;
+  gap: 160px;
+  padding: 4px 0 6px;
   flex-shrink: 0;
 }
 
@@ -619,22 +704,49 @@ html, body {
   gap: 4px;
 }
 
-/* 10x larger: previously ~180px, now much larger filling the space */
+/* 70% of 380px/330px is roughly 266px/231px */
 .flat-hand-svg {
-  width: 380px;
-  height: 330px;
+  width: 266px;
+  height: 231px;
   overflow: visible;
   filter: drop-shadow(0 4px 16px rgba(0,0,0,0.3));
 }
 
 .hand-label {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-sub);
 }
 
 .finger-part {
   transition: fill 0.2s ease, filter 0.2s ease;
+}
+
+/* ---- COUNTDOWN SPACE PROMPT STYLES ---- */
+.space-prompt-icon {
+  font-size: 64px;
+  margin-bottom: 8px;
+  animation: keyFloat 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes keyFloat {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-12px); }
+}
+
+.countdown-ready-text {
+  font-size: 42px;
+  font-weight: 900;
+  color: var(--text-main);
+  letter-spacing: 1px;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.countdown-ready-sub {
+  font-size: 18px;
+  color: var(--text-sub);
+  font-family: 'Outfit', sans-serif;
+  margin-top: 4px;
 }
 
 /* ---- Game ---- */

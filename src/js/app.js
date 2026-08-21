@@ -64,6 +64,16 @@ class App {
     document.getElementById('btn-to-category')?.addEventListener('click', () => {
       this.showScene('scene-category');
     });
+
+    /* Global Space Listener for Countdown trigger */
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.key === ' ') {
+        if (this.isWaitingForSpaceInCountdown) {
+          e.preventDefault();
+          this.runActiveCountdown();
+        }
+      }
+    });
   }
 
   showScene(sceneId) {
@@ -75,8 +85,25 @@ class App {
     if (target) { target.style.display = 'flex'; target.classList.add('scene-active'); }
   }
 
-  startCountdown(mode) {
+  startCountdown(mode, subCategoryId = null) {
     this.showScene('scene-countdown');
+    const readyBox = document.getElementById('countdown-ready-box');
+    const activeBox = document.getElementById('countdown-active-box');
+    if (readyBox) readyBox.style.display = 'flex';
+    if (activeBox) activeBox.style.display = 'none';
+
+    this.isWaitingForSpaceInCountdown = true;
+    this.countdownMode = mode;
+    this.countdownSubCat = subCategoryId;
+  }
+
+  runActiveCountdown() {
+    this.isWaitingForSpaceInCountdown = false;
+    const readyBox = document.getElementById('countdown-ready-box');
+    const activeBox = document.getElementById('countdown-active-box');
+    if (readyBox) readyBox.style.display = 'none';
+    if (activeBox) activeBox.style.display = 'flex';
+
     let count = 3;
     const numEl = document.getElementById('countdown-number');
     if (numEl) numEl.textContent = count;
@@ -92,19 +119,19 @@ class App {
         sound.playSuccessSound?.();
       } else {
         clearInterval(timer);
-        this.launchApp(mode);
+        this.launchApp(this.countdownMode, this.countdownSubCat);
       }
     }, 800);
   }
 
-  launchApp(mode) {
+  launchApp(mode, subCategoryId = null) {
     this.showScene('app-viewport');
 
     if (!this.appInitialized) {
       this.appInitialized = true;
       initScaler();
       this.keyboard     = new VirtualKeyboard('virtual-keyboard');
-      this.typingEngine = new TypingEngine(this.keyboard);
+      this.typingEngine = new TypingEngine(this.keyboard, this); // pass app instance to typingEngine for trigger control
       this.reportView   = new ReportView();
       this.gameEngine   = new TypingGame('game-canvas');
       this.bindInAppNav();
@@ -112,7 +139,7 @@ class App {
       this.bindThemeAndSound();
     }
 
-    this.switchTab(mode);
+    this.switchTab(mode, subCategoryId);
     this.updateUserUI();
   }
 
@@ -125,7 +152,7 @@ class App {
     });
   }
 
-  switchTab(tab) {
+  switchTab(tab, subCategoryId = null) {
     this.currentTab = tab;
     document.querySelectorAll('.nav-item[data-tab]').forEach(el => {
       el.classList.toggle('active', el.dataset.tab === tab);
@@ -134,7 +161,8 @@ class App {
     const practiceView = document.getElementById('practice-view');
     const gameView     = document.getElementById('game-view');
 
-    this.renderSubCategories('home');
+    const defaultSub = subCategoryId || (tab === 'position' ? 'home' : (tab === 'word1' ? 'a-gyo' : null));
+    this.renderSubCategories(defaultSub);
 
     if (tab === 'game') {
       practiceView.style.display = 'none';
@@ -144,7 +172,7 @@ class App {
       gameView.style.display     = 'none';
       practiceView.style.display = 'flex';
       this.gameEngine?.stop();
-      this.typingEngine?.setMode(tab, 'home');
+      this.typingEngine?.setMode(tab, defaultSub);
     }
   }
 
@@ -152,25 +180,40 @@ class App {
     const bar = document.getElementById('sub-category-bar');
     if (!bar) return;
 
-    if (this.currentTab !== 'position') {
+    if (this.currentTab !== 'position' && this.currentTab !== 'word1') {
       bar.style.display = 'none';
       return;
     }
     bar.style.display = 'flex';
     bar.innerHTML = '';
 
-    PRACTICE_DATA.positionCategories.forEach(cat => {
-      const btn = document.createElement('button');
-      btn.className = `btn-sub-cat ${cat.id === activeId ? 'active' : ''}`;
-      btn.dataset.cat = cat.id;
-      btn.textContent = cat.name;
-      btn.addEventListener('click', () => {
-        bar.querySelectorAll('.btn-sub-cat').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        this.typingEngine?.setSubCategory(cat.id);
+    if (this.currentTab === 'position') {
+      PRACTICE_DATA.positionCategories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = `btn-sub-cat ${cat.id === activeId ? 'active' : ''}`;
+        btn.dataset.cat = cat.id;
+        btn.textContent = cat.name;
+        btn.addEventListener('click', () => {
+          bar.querySelectorAll('.btn-sub-cat').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          this.startCountdown('position', cat.id);
+        });
+        bar.appendChild(btn);
       });
-      bar.appendChild(btn);
-    });
+    } else if (this.currentTab === 'word1') {
+      PRACTICE_DATA.word1Categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = `btn-sub-cat ${cat.id === activeId ? 'active' : ''}`;
+        btn.dataset.cat = cat.id;
+        btn.textContent = cat.name;
+        btn.addEventListener('click', () => {
+          bar.querySelectorAll('.btn-sub-cat').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          this.startCountdown('word1', cat.id);
+        });
+        bar.appendChild(btn);
+      });
+    }
   }
 
   updateUserUI() {

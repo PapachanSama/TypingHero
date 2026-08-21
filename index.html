@@ -93,10 +93,17 @@
   </div>
 
   <!-- ================================================================
-       SCENE 3: COUNTDOWN (3 → 2 → 1 → スタート！)
+       SCENE 3: COUNTDOWN SCENE (Space prompt OR Numbers)
        ================================================================ -->
   <div id="scene-countdown" class="scene">
-    <div class="countdown-center">
+    <!-- Ready space-press prompt -->
+    <div class="countdown-center" id="countdown-ready-box">
+      <div class="space-prompt-icon">⌨️</div>
+      <div class="countdown-ready-text">スペースキーを押してはじめよう！</div>
+      <div class="countdown-ready-sub">Press SPACE to Start</div>
+    </div>
+    <!-- 3-2-1 active countdown -->
+    <div class="countdown-center" id="countdown-active-box" style="display: none;">
       <div id="countdown-number" class="countdown-number">3</div>
       <div class="countdown-sub">準備してください！</div>
     </div>
@@ -161,11 +168,25 @@
           </div>
         </div>
 
-        <!-- 3-Row Display Card: Row1=ひらがな, Row2=漢字, Row3=ROMAJI(大文字) -->
-        <div class="display-card">
+        <!-- Standard 3-Row Display Card -->
+        <div class="display-card" id="standard-display-card">
           <div id="typing-row-kana"   class="display-row row-kana"></div>
           <div id="typing-row-kanji"  class="display-row row-kanji"></div>
           <div id="typing-row-romaji" class="display-row row-romaji"></div>
+        </div>
+
+        <!-- Word 1 Memo Notepad Display Card (Special Design) -->
+        <div id="word1-notepad-card" class="word1-notepad-card" style="display: none;">
+          <!-- Left: Sample Hiragana List -->
+          <div class="notepad-panel notepad-left">
+            <div class="notepad-title">お手本 (ひらがな)</div>
+            <div id="notepad-sample-list" class="notepad-list"></div>
+          </div>
+          <!-- Right: User typing output -->
+          <div class="notepad-panel notepad-right">
+            <div class="notepad-title">入力欄</div>
+            <div id="notepad-user-content" class="notepad-user-content"></div>
+          </div>
         </div>
 
         <!-- Virtual Keyboard + Hand Illustrations -->

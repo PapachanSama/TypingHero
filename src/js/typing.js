@@ -1,5 +1,7 @@
 /**
- * Core Typing Engine - setMode only loads text; Space key no longer handled here.
+ * Core Typing Engine - setMode only loads text.
+ * Support for Word 1 special Notepad Dual-Column layout,
+ * and space countdown redirect for consecutive lessons.
  */
 
 import { PRACTICE_DATA } from './data_jp.js';
@@ -9,8 +11,9 @@ import { recordPracticeScore } from './firebase.js';
 import { auth } from './auth.js';
 
 export class TypingEngine {
-  constructor(keyboardInstance) {
+  constructor(keyboardInstance, appInstance = null) {
     this.keyboard = keyboardInstance;
+    this.appInstance = appInstance;
     this.currentMode = 'position';
     this.selectedSubCategoryId = 'home';
     this.itemIndex = 0;
@@ -25,6 +28,12 @@ export class TypingEngine {
     this.correctKeystrokes = 0;
     this.errorCount = 0;
     this.timerInterval = null;
+
+    // Word 1 Notepad Special variables
+    this.notepadWords = [];
+    this.notepadCurrentWordIndex = 0;
+    this.errorInNotepad = false;
+    this.lastErrorChar = '';
 
     this.bindEvents();
   }
@@ -57,11 +66,49 @@ export class TypingEngine {
     this.errorCount = 0;
     this.tokenIndex = 0;
     this.typedRomajiInToken = '';
+    this.errorInNotepad = false;
+    this.lastErrorChar = '';
     this.updateStatsUI();
   }
 
   loadCurrentItem() {
     let item = null;
+
+    // Specialize loading for Word 1 mode
+    if (this.currentMode === 'word1') {
+      const catObj = PRACTICE_DATA.word1Categories.find(c => c.id === this.selectedSubCategoryId) || PRACTICE_DATA.word1Categories[0];
+      item = catObj.lessons[this.itemIndex % catObj.lessons.length];
+      
+      if (!item) return;
+      
+      const titleEl = document.getElementById('typing-title');
+      if (titleEl) titleEl.textContent = `${catObj.name} - ${item.title}`;
+
+      this.notepadWords = item.words;
+      this.notepadCurrentWordIndex = 0;
+
+      // Initialize tokens for the first word
+      const currentWord = this.notepadWords[0];
+      this.tokens = parseKanaToRomajiTokens(currentWord);
+      this.tokenIndex = 0;
+      this.typedRomajiInToken = '';
+
+      // Toggle Notepad layouts
+      const stdCard = document.getElementById('standard-display-card');
+      const noteCard = document.getElementById('word1-notepad-card');
+      if (stdCard) stdCard.style.display = 'none';
+      if (noteCard) noteCard.style.display = 'flex';
+
+      this.renderNotepadDisplay();
+      this.highlightKeyboardNextKey();
+      return;
+    }
+
+    // Normal modes layout loading
+    const stdCard = document.getElementById('standard-display-card');
+    const noteCard = document.getElementById('word1-notepad-card');
+    if (stdCard) stdCard.style.display = 'flex';
+    if (noteCard) noteCard.style.display = 'none';
 
     if (this.currentMode === 'position') {
       const catObj = PRACTICE_DATA.positionCategories.find(c => c.id === this.selectedSubCategoryId) || PRACTICE_DATA.positionCategories[0];
@@ -105,6 +152,63 @@ export class TypingEngine {
     this.updateRomajiGuideDisplay();
   }
 
+  renderNotepadDisplay() {
+    const sampleList = document.getElementById('notepad-sample-list');
+    const userContent = document.getElementById('notepad-user-content');
+    if (!sampleList || !userContent) return;
+
+    // Render Left panel: sample hiragana list
+    sampleList.innerHTML = '';
+    this.notepadWords.forEach((word, idx) => {
+      const item = document.createElement('div');
+      item.className = 'notepad-item';
+      if (idx < this.notepadCurrentWordIndex) {
+        item.classList.add('completed');
+      } else if (idx === this.notepadCurrentWordIndex) {
+        item.classList.add('active');
+      }
+      item.textContent = word;
+      sampleList.appendChild(item);
+    });
+
+    // Render Right panel: user inputs
+    userContent.innerHTML = '';
+    for (let i = 0; i < this.notepadCurrentWordIndex; i++) {
+      const div = document.createElement('div');
+      div.className = 'notepad-item completed';
+      div.textContent = this.notepadWords[i];
+      userContent.appendChild(div);
+    }
+
+    // Active typed word rendering with red typo support
+    if (this.notepadCurrentWordIndex < this.notepadWords.length) {
+      const activeDiv = document.createElement('div');
+      activeDiv.className = 'notepad-item active';
+
+      let correctHiragana = '';
+      this.tokens.forEach((t, idx) => {
+        if (idx < this.tokenIndex) {
+          correctHiragana += t.kana;
+        }
+      });
+
+      const correctSpan = document.createElement('span');
+      correctSpan.className = 'correct-char';
+      correctSpan.textContent = correctHiragana;
+      activeDiv.appendChild(correctSpan);
+
+      if (this.errorInNotepad) {
+        const errorSpan = document.createElement('span');
+        errorSpan.className = 'error-char';
+        // Convert to uppercase or original pressed letter
+        errorSpan.textContent = (this.lastErrorChar || '').toUpperCase();
+        activeDiv.appendChild(errorSpan);
+      }
+
+      userContent.appendChild(activeDiv);
+    }
+  }
+
   updateRomajiGuideDisplay() {
     const el = document.getElementById('typing-row-romaji');
     if (!el) return;
@@ -136,6 +240,7 @@ export class TypingEngine {
   }
 
   handleKeyDown(e) {
+    if (this.appInstance && this.appInstance.isWaitingForSpaceInCountdown) return;
     if (e.ctrlKey || e.altKey || e.metaKey) return;
     if (e.key.length !== 1 || !/[a-zA-Z\-\s,.]/i.test(e.key)) return;
 
@@ -166,6 +271,9 @@ export class TypingEngine {
       sound.playKeySound();
       this.correctKeystrokes++;
       this.typedRomajiInToken += pressedKey;
+      
+      // Clear typo on notepad
+      this.errorInNotepad = false;
 
       if (currentToken.romajiCandidates.includes(this.typedRomajiInToken)
           || this.typedRomajiInToken.length >= (matchedCand?.length || 1)) {
@@ -173,15 +281,39 @@ export class TypingEngine {
         this.typedRomajiInToken = '';
       }
 
+      // Check if current item/word completed
       if (this.tokenIndex >= this.tokens.length) {
-        this.onItemCompleted();
+        if (this.currentMode === 'word1') {
+          sound.playSuccessSound();
+          this.notepadCurrentWordIndex++;
+          if (this.notepadCurrentWordIndex < this.notepadWords.length) {
+            // Load next word in list
+            const nextWord = this.notepadWords[this.notepadCurrentWordIndex];
+            this.tokens = parseKanaToRomajiTokens(nextWord);
+            this.tokenIndex = 0;
+            this.typedRomajiInToken = '';
+          } else {
+            this.onItemCompleted();
+          }
+        } else {
+          this.onItemCompleted();
+        }
       }
     } else {
       sound.playErrorSound();
       this.errorCount++;
+      
+      if (this.currentMode === 'word1') {
+        this.errorInNotepad = true;
+        this.lastErrorChar = pressedKey;
+      }
     }
 
-    this.updateRomajiGuideDisplay();
+    if (this.currentMode === 'word1') {
+      this.renderNotepadDisplay();
+    } else {
+      this.updateRomajiGuideDisplay();
+    }
     this.highlightKeyboardNextKey();
     this.updateStatsUI();
   }
@@ -216,8 +348,14 @@ export class TypingEngine {
       } else {
         this.itemIndex++;
       }
+      
       this.resetSession();
-      this.loadCurrentItem();
+      // Redirect back to Space-Key prompt countdown on the next consecutive item
+      if (this.appInstance) {
+        this.appInstance.startCountdown(this.currentMode, this.selectedSubCategoryId);
+      } else {
+        this.loadCurrentItem();
+      }
     }, 400);
   }
 
