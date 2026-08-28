@@ -1,6 +1,7 @@
 /**
  * Core Typing Engine - setMode only loads text.
  * Support for Word 1 special Notepad Dual-Column layout,
+ * level-based Long text loaders from external files,
  * and space countdown redirect for consecutive lessons.
  */
 
@@ -16,6 +17,7 @@ export class TypingEngine {
     this.appInstance = appInstance;
     this.currentMode = 'position';
     this.selectedSubCategoryId = 'home';
+    this.selectedLessonId = null; // Used for Level-based long texts
     this.itemIndex = 0;
     this.passageIndex = 0;
 
@@ -35,6 +37,10 @@ export class TypingEngine {
     this.errorInNotepad = false;
     this.lastErrorChar = '';
 
+    // Long Passage parsed variables
+    this.loadedPassages = [];
+    this.loadedTitle = '';
+
     this.bindEvents();
   }
 
@@ -42,9 +48,10 @@ export class TypingEngine {
     window.addEventListener('keydown', (e) => this.handleKeyDown(e));
   }
 
-  setMode(mode, subCategoryId = null) {
+  setMode(mode, subCategoryId = null, lessonId = null) {
     this.currentMode = mode;
     if (subCategoryId) this.selectedSubCategoryId = subCategoryId;
+    this.selectedLessonId = lessonId;
     this.itemIndex = 0;
     this.passageIndex = 0;
     this.resetSession();
@@ -114,13 +121,17 @@ export class TypingEngine {
       const catObj = PRACTICE_DATA.positionCategories.find(c => c.id === this.selectedSubCategoryId) || PRACTICE_DATA.positionCategories[0];
       item = catObj.lessons[this.itemIndex % catObj.lessons.length];
     } else if (this.currentMode === 'long') {
-      const longItem = PRACTICE_DATA.long[this.itemIndex % PRACTICE_DATA.long.length];
-      const passage = longItem.passages[this.passageIndex % longItem.passages.length];
-      this.tokens = parseKanaToRomajiTokens(passage.kana);
-      this.tokenIndex = 0;
-      this.typedRomajiInToken = '';
-      this.renderTextDisplay(passage.kana, passage.kanji, `${longItem.title} (${this.passageIndex + 1}/${longItem.passages.length})`);
-      this.highlightKeyboardNextKey();
+      // Level-Based Long Text Loader
+      const catObj = PRACTICE_DATA.longCategories.find(c => c.id === this.selectedSubCategoryId) || PRACTICE_DATA.longCategories[0];
+      let lesson = catObj.lessons.find(l => l.id === this.selectedLessonId);
+      if (!lesson && catObj.lessons.length > 0) {
+        lesson = catObj.lessons[0];
+        this.selectedLessonId = lesson.id;
+      }
+
+      if (lesson) {
+        this.loadLongTextFromFile(lesson.file, lesson.title);
+      }
       return;
     } else {
       const list = PRACTICE_DATA[this.currentMode] || [];
@@ -132,6 +143,82 @@ export class TypingEngine {
     this.tokenIndex = 0;
     this.typedRomajiInToken = '';
     this.renderTextDisplay(item.kana, item.kanji || item.display || item.kana, item.title || '');
+    this.highlightKeyboardNextKey();
+  }
+
+  /* Async file loader & parser for external long text database (.txt files) */
+  async loadLongTextFromFile(filePath, lessonTitle) {
+    try {
+      const titleEl = document.getElementById('typing-title');
+      if (titleEl) titleEl.textContent = `${lessonTitle} (読み込み中...)`;
+
+      const response = await fetch(filePath);
+      if (!response.ok) throw new Error("장문 텍스트 로딩 실패: " + response.statusText);
+      const text = await response.text();
+      this.parseLongText(text, lessonTitle);
+    } catch (error) {
+      console.error(error);
+      this.renderTextDisplay(
+        "しょしんしゃ れんしゅう",
+        "장문 텍스트 파일을 로드할 수 없습니다. 경로를 확인해주세요.",
+        lessonTitle
+      );
+    }
+  }
+
+  parseLongText(rawText, lessonTitle) {
+    // Split lines and normalize
+    const lines = rawText.split('\n').map(l => l.trim()).filter(l => l !== '');
+    
+    let parsedTitle = lessonTitle;
+    const passages = [];
+    
+    let readingTitle = false;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.startsWith('[TITLE]')) {
+        readingTitle = true;
+        continue;
+      }
+      if (readingTitle) {
+        parsedTitle = line;
+        readingTitle = false;
+        continue;
+      }
+      if (line.startsWith('[PASSAGE]')) {
+        if (i + 2 < lines.length) {
+          const kanjiText = lines[i + 1];
+          const kanaText = lines[i + 2];
+          passages.push({ kanji: kanjiText, kana: kanaText });
+          i += 2;
+        }
+      }
+    }
+
+    this.loadedPassages = passages;
+    this.loadedTitle = parsedTitle;
+    
+    // Load the active paragraph
+    this.loadLongPassage();
+  }
+
+  loadLongPassage() {
+    if (!this.loadedPassages || this.loadedPassages.length === 0) {
+      this.renderTextDisplay("데이터 없음", "파싱된 장문 데이터가 없습니다.", this.loadedTitle);
+      return;
+    }
+
+    const passage = this.loadedPassages[this.passageIndex % this.loadedPassages.length];
+    this.tokens = parseKanaToRomajiTokens(passage.kana);
+    this.tokenIndex = 0;
+    this.typedRomajiInToken = '';
+
+    this.renderTextDisplay(
+      passage.kana,
+      passage.kanji,
+      `${this.loadedTitle} (${this.passageIndex + 1}/${this.loadedPassages.length})`
+    );
     this.highlightKeyboardNextKey();
   }
 
@@ -200,7 +287,6 @@ export class TypingEngine {
       if (this.errorInNotepad) {
         const errorSpan = document.createElement('span');
         errorSpan.className = 'error-char';
-        // Convert to uppercase or original pressed letter
         errorSpan.textContent = (this.lastErrorChar || '').toUpperCase();
         activeDiv.appendChild(errorSpan);
       }
@@ -338,12 +424,21 @@ export class TypingEngine {
     });
 
     setTimeout(() => {
+      let nextLessonId = this.selectedLessonId;
+
       if (this.currentMode === 'long') {
-        const longItem = PRACTICE_DATA.long[this.itemIndex % PRACTICE_DATA.long.length];
         this.passageIndex++;
-        if (this.passageIndex >= longItem.passages.length) {
+        if (this.passageIndex >= (this.loadedPassages?.length || 1)) {
           this.passageIndex = 0;
-          this.itemIndex++;
+          
+          // Switch to next lesson in the same category automatically
+          const catObj = PRACTICE_DATA.longCategories.find(c => c.id === this.selectedSubCategoryId);
+          if (catObj && catObj.lessons.length > 0) {
+            const currentIndex = catObj.lessons.findIndex(l => l.id === this.selectedLessonId);
+            const nextIndex = (currentIndex + 1) % catObj.lessons.length;
+            this.selectedLessonId = catObj.lessons[nextIndex].id;
+            nextLessonId = this.selectedLessonId;
+          }
         }
       } else {
         this.itemIndex++;
@@ -352,7 +447,7 @@ export class TypingEngine {
       this.resetSession();
       // Redirect back to Space-Key prompt countdown on the next consecutive item
       if (this.appInstance) {
-        this.appInstance.startCountdown(this.currentMode, this.selectedSubCategoryId);
+        this.appInstance.startCountdown(this.currentMode, this.selectedSubCategoryId, nextLessonId);
       } else {
         this.loadCurrentItem();
       }

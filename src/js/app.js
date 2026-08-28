@@ -85,7 +85,7 @@ class App {
     if (target) { target.style.display = 'flex'; target.classList.add('scene-active'); }
   }
 
-  startCountdown(mode, subCategoryId = null) {
+  startCountdown(mode, subCategoryId = null, lessonId = null) {
     this.showScene('scene-countdown');
     const readyBox = document.getElementById('countdown-ready-box');
     const activeBox = document.getElementById('countdown-active-box');
@@ -95,6 +95,7 @@ class App {
     this.isWaitingForSpaceInCountdown = true;
     this.countdownMode = mode;
     this.countdownSubCat = subCategoryId;
+    this.countdownLessonId = lessonId;
   }
 
   runActiveCountdown() {
@@ -119,12 +120,12 @@ class App {
         sound.playSuccessSound?.();
       } else {
         clearInterval(timer);
-        this.launchApp(this.countdownMode, this.countdownSubCat);
+        this.launchApp(this.countdownMode, this.countdownSubCat, this.countdownLessonId);
       }
     }, 800);
   }
 
-  launchApp(mode, subCategoryId = null) {
+  launchApp(mode, subCategoryId = null, lessonId = null) {
     this.showScene('app-viewport');
 
     if (!this.appInitialized) {
@@ -139,7 +140,7 @@ class App {
       this.bindThemeAndSound();
     }
 
-    this.switchTab(mode, subCategoryId);
+    this.switchTab(mode, subCategoryId, lessonId);
     this.updateUserUI();
   }
 
@@ -152,7 +153,7 @@ class App {
     });
   }
 
-  switchTab(tab, subCategoryId = null) {
+  switchTab(tab, subCategoryId = null, lessonId = null) {
     this.currentTab = tab;
     document.querySelectorAll('.nav-item[data-tab]').forEach(el => {
       el.classList.toggle('active', el.dataset.tab === tab);
@@ -161,8 +162,14 @@ class App {
     const practiceView = document.getElementById('practice-view');
     const gameView     = document.getElementById('game-view');
 
-    const defaultSub = subCategoryId || (tab === 'position' ? 'home' : (tab === 'word1' ? 'a-gyo' : null));
-    this.renderSubCategories(defaultSub);
+    const defaultSub = subCategoryId || (
+      tab === 'position' ? 'home' : (
+        tab === 'word1' ? 'a-gyo' : (
+          tab === 'long' ? 'long-beginner' : null
+        )
+      )
+    );
+    this.renderSubCategories(defaultSub, lessonId);
 
     if (tab === 'game') {
       practiceView.style.display = 'none';
@@ -172,20 +179,27 @@ class App {
       gameView.style.display     = 'none';
       practiceView.style.display = 'flex';
       this.gameEngine?.stop();
-      this.typingEngine?.setMode(tab, defaultSub);
+      this.typingEngine?.setMode(tab, defaultSub, lessonId);
     }
   }
 
-  renderSubCategories(activeId) {
+  renderSubCategories(activeId, lessonId = null) {
     const bar = document.getElementById('sub-category-bar');
+    const lessonBar = document.getElementById('lesson-selection-bar');
     if (!bar) return;
 
-    if (this.currentTab !== 'position' && this.currentTab !== 'word1') {
+    if (this.currentTab !== 'position' && this.currentTab !== 'word1' && this.currentTab !== 'long') {
       bar.style.display = 'none';
+      if (lessonBar) lessonBar.style.display = 'none';
       return;
     }
     bar.style.display = 'flex';
     bar.innerHTML = '';
+
+    if (lessonBar) {
+      lessonBar.style.display = 'none';
+      lessonBar.innerHTML = '';
+    }
 
     if (this.currentTab === 'position') {
       PRACTICE_DATA.positionCategories.forEach(cat => {
@@ -213,6 +227,45 @@ class App {
         });
         bar.appendChild(btn);
       });
+    } else if (this.currentTab === 'long') {
+      // 1. Render Level selector
+      PRACTICE_DATA.longCategories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = `btn-sub-cat ${cat.id === activeId ? 'active' : ''}`;
+        btn.dataset.cat = cat.id;
+        btn.textContent = cat.name;
+        btn.addEventListener('click', () => {
+          bar.querySelectorAll('.btn-sub-cat').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          const catObj = PRACTICE_DATA.longCategories.find(c => c.id === cat.id);
+          const firstLessonId = catObj && catObj.lessons.length > 0 ? catObj.lessons[0].id : null;
+          this.startCountdown('long', cat.id, firstLessonId);
+        });
+        bar.appendChild(btn);
+      });
+
+      // 2. Render Lesson selector for the active Level Category
+      if (lessonBar) {
+        const activeCatObj = PRACTICE_DATA.longCategories.find(c => c.id === activeId);
+        if (activeCatObj && activeCatObj.lessons.length > 0) {
+          lessonBar.style.display = 'flex';
+          const currentActiveLessonId = lessonId || activeCatObj.lessons[0].id;
+
+          activeCatObj.lessons.forEach(les => {
+            const btn = document.createElement('button');
+            btn.className = `btn-sub-cat ${les.id === currentActiveLessonId ? 'active' : ''}`;
+            btn.dataset.lesson = les.id;
+            btn.textContent = les.title;
+            btn.addEventListener('click', () => {
+              lessonBar.querySelectorAll('.btn-sub-cat').forEach(b => b.classList.remove('active'));
+              btn.classList.add('active');
+              this.startCountdown('long', activeId, les.id);
+            });
+            lessonBar.appendChild(btn);
+          });
+        }
+      }
     }
   }
 
